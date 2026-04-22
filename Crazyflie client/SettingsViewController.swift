@@ -364,8 +364,9 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         landingDurationTextField.backgroundColor = AppTheme.backgroundColor
         landingDurationTextField.textColor = AppTheme.primaryTextColor
         landingDurationTextField.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
+
         closeButton.layer.borderColor = AppTheme.accentColor.cgColor
-        closeButton.setTitleColor(AppTheme.accentColor, for: .normal)
+        closeButton.setTitleColor(AppTheme.isDarkModeEnabled ? AppTheme.accentColor : UIColor.systemBlue, for: .normal)
     }
 
     private func updateUI() {
