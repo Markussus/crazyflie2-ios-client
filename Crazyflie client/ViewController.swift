@@ -17,6 +17,8 @@ final class ViewController: UIViewController {
     
     @IBOutlet weak var unlockLabel: UILabel!
     @IBOutlet weak var armButton: UIButton!
+    @IBOutlet weak var demoButton: UIButton!
+    @IBOutlet weak var debugTextView: UITextView!
     @IBOutlet weak var connectButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var connectProgress: UIProgressView!
@@ -55,6 +57,10 @@ final class ViewController: UIViewController {
     @IBAction func armClicked(_ sender: Any) {
         viewModel?.toggleArm()
     }
+
+    @IBAction func demoClicked(_ sender: Any) {
+        viewModel?.toggleDemoMode()
+    }
     
     @IBAction func settingsClicked(_ sender: Any) {
         performSegue(withIdentifier: "settings", sender: nil)
@@ -68,7 +74,13 @@ final class ViewController: UIViewController {
         
         connectButton.layer.borderColor = connectButton.tintColor.cgColor
         armButton.layer.borderColor = armButton.tintColor.cgColor
+        demoButton.layer.borderColor = demoButton.tintColor.cgColor
         settingsButton.layer.borderColor = settingsButton.tintColor.cgColor
+        debugTextView.layer.borderColor = UIColor.lightGray.cgColor
+        debugTextView.layer.borderWidth = 1
+        debugTextView.layer.cornerRadius = 4
+        debugTextView.isEditable = false
+        debugTextView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
         
         //Init joysticks
         let frame = UIScreen.main.bounds
@@ -97,6 +109,14 @@ final class ViewController: UIViewController {
         armButton.isHidden = !viewModel.showsArmButton
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)
+        demoButton.isEnabled = viewModel.isDemoButtonEnabled
+        demoButton.setTitle(viewModel.demoButtonTitle, for: .normal)
+        debugTextView.text = viewModel.debugLogText
+
+        if !debugTextView.text.isEmpty {
+            let range = NSRange(location: debugTextView.text.count - 1, length: 1)
+            debugTextView.scrollRangeToVisible(range)
+        }
         
         leftJoystick?.hLabel.text = viewModel.leftXTitle
         leftJoystick?.vLabel.text = viewModel.leftYTitle

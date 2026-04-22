@@ -69,6 +69,26 @@ final class ViewModel {
         return crazyFlie.state == .connected && crazyFlie.requiresArming
     }
 
+    var demoButtonTitle: String {
+        guard let crazyFlie = crazyFlie else {
+            return "Demo"
+        }
+
+        return crazyFlie.isDemoMode ? "End Demo" : "Demo"
+    }
+
+    var isDemoButtonEnabled: Bool {
+        guard let crazyFlie = crazyFlie else {
+            return false
+        }
+
+        return crazyFlie.isDemoMode || crazyFlie.state == .idle
+    }
+
+    var debugLogText: String {
+        return crazyFlie?.debugLogText ?? "Debug log ready."
+    }
+
     var armButtonTitle: String {
         guard let armingState = crazyFlie?.armingState else {
             return "Arm"
@@ -159,6 +179,10 @@ final class ViewModel {
 
     func toggleArm() {
         crazyFlie?.toggleArm()
+    }
+
+    func toggleDemoMode() {
+        crazyFlie?.toggleDemoSession()
     }
     
     // MARK: - Private Methods

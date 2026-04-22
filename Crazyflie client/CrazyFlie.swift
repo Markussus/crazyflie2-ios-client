@@ -60,6 +60,8 @@ open class CrazyFlie: NSObject {
     private(set) var requiresArming = false
     private(set) var armingState: CrazyFlieArmingState = .unavailable
     private(set) var isDetectingDeviceType = false
+    private(set) var isDemoMode = false
+    private(set) var debugLogText = "Debug log ready."
 
     private var timer:Timer?
     private var delegate: CrazyFlieDelegate?
@@ -68,6 +70,8 @@ open class CrazyFlie: NSObject {
     private var armingTimeoutWorkItem: DispatchWorkItem?
     private var pendingArmingTarget: Bool?
     private var hasSentZeroThrustPacket = false
+    private var debugLogLines = ["Debug log ready."]
+    private var lastCommanderLogSignature: String?
 
     var commander: CrazyFlieCommander?
 
@@ -110,6 +114,8 @@ open class CrazyFlie: NSObject {
             return
         }
 
+        appendDebugLog("Connecting over BLE...")
+
         self.bluetoothLink.connect(nil, callback: {[weak self] (connected) in
             callback?(connected)
             guard connected else {
@@ -140,16 +146,45 @@ open class CrazyFlie: NSObject {
                 return
             }
 
+            self?.appendDebugLog("BLE connected.")
             self?.requestDeviceType()
             self?.prepareFlightStateForConnectedDevice()
             self?.startTimer()
         })
     }
 
+    func toggleDemoSession() {
+        if isDemoMode {
+            disconnect()
+            return
+        }
+
+        guard state == .idle else {
+            appendDebugLog("Demo mode blocked: disconnect the current Crazyflie first.")
+            return
+        }
+
+        resetFlightState()
+        isDemoMode = true
+        state = .connected
+        setFlightRequirement(true, deviceType: "Demo Brushless")
+        appendDebugLog("Demo connected: Crazyflie 2.1 Brushless (simulated)")
+        startTimer()
+    }
+
     func disconnect() {
+        if isDemoMode {
+            stopTimer()
+            resetFlightState()
+            state = .idle
+            appendDebugLog("Demo disconnected.")
+            return
+        }
+
         bluetoothLink.disconnect()
         stopTimer()
         resetFlightState()
+        appendDebugLog("Disconnected.")
         delegate?.didUpdateFlightStatus()
     }
 
@@ -200,6 +235,12 @@ open class CrazyFlie: NSObject {
 
     private func sendFlightData(_ roll:Float, pitch:Float, thrust:Float, yaw:Float) {
         let commanderPacket = CommanderPacket(header: CrazyFlieHeader.commander.rawValue, roll: roll, pitch: pitch, yaw: yaw, thrust: UInt16(thrust))
+        logCommanderPacket(roll: roll, pitch: pitch, thrust: thrust, yaw: yaw, simulated: isDemoMode)
+
+        if isDemoMode {
+            return
+        }
+
         bluetoothLink.sendPacket(commanderPacket.data, callback: nil)
         print("pitch: \(pitch) roll: \(roll) thrust: \(thrust) yaw: \(yaw)")
     }
@@ -240,6 +281,10 @@ open class CrazyFlie: NSObject {
     }
 
     private func requestDeviceType() {
+        guard !isDemoMode else {
+            return
+        }
+
         detectionTimeoutWorkItem?.cancel()
         isDetectingDeviceType = true
         delegate?.didUpdateFlightStatus()
@@ -251,6 +296,7 @@ open class CrazyFlie: NSObject {
         }
 
         detectionTimeoutWorkItem = workItem
+        appendDebugLog("TX device type request")
         bluetoothLink.sendPacket(packet(header: CRTP.platformVersionHeader,
                                         payload: [CRTP.getDeviceTypeNameCommand]),
                                  callback: nil)
@@ -265,6 +311,24 @@ open class CrazyFlie: NSObject {
         delegate?.didUpdateFlightStatus()
 
         let payload: [UInt8] = [CRTP.armSystemCommand, arm ? 1 : 0]
+        appendDebugLog("\(isDemoMode ? "DEMO" : "TX") Supervisor port 9 ch 1 -> CMD_ARM_SYSTEM payload [\(payload[0]), \(payload[1])]")
+
+        if isDemoMode {
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self = self, self.pendingArmingTarget == arm else {
+                    return
+                }
+
+                self.finishArmingRequest(isArmed: arm, updateZeroPacketState: true)
+            }
+
+            armingTimeoutWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: workItem)
+            hasSentZeroThrustPacket = false
+            sendZeroThrustIfNeeded()
+            return
+        }
+
         bluetoothLink.sendPacket(packet(header: CRTP.legacySupervisorHeader, payload: payload), callback: nil)
         bluetoothLink.sendPacket(packet(header: CRTP.platformCommandHeader, payload: payload)) { [weak self] success in
             guard let self = self, self.pendingArmingTarget == arm else {
@@ -281,7 +345,7 @@ open class CrazyFlie: NSObject {
                 return
             }
 
-                self.finishArmingRequest(isArmed: arm, updateZeroPacketState: true)
+            self.finishArmingRequest(isArmed: arm, updateZeroPacketState: true)
         }
 
         hasSentZeroThrustPacket = false
@@ -296,6 +360,7 @@ open class CrazyFlie: NSObject {
         armingTimeoutWorkItem = nil
         pendingArmingTarget = nil
         armingState = isArmed ? .armed : .disarmed
+        appendDebugLog(isArmed ? "Arm state: armed" : "Arm state: disarmed")
 
         if updateZeroPacketState && !isArmed {
             hasSentZeroThrustPacket = false
@@ -331,6 +396,7 @@ open class CrazyFlie: NSObject {
 
         let rawDeviceType = String(data: Data(payload.dropFirst()), encoding: .utf8)?
             .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet.controlCharacters))
+        appendDebugLog("RX device type -> \(rawDeviceType ?? "unknown")")
 
         let isBrushless = UserDefaults.standard.bool(forKey: "forceBrushlessArmControl")
             || rawDeviceType == CRTP.brushlessDeviceType
@@ -356,6 +422,9 @@ open class CrazyFlie: NSObject {
         detectedDeviceType = deviceType
         requiresArming = needsArming
         armingState = needsArming ? .disarmed : .unavailable
+        if let deviceType = deviceType {
+            appendDebugLog("Flight mode: \(needsArming ? "brushless" : "legacy") for \(deviceType)")
+        }
         delegate?.didUpdateFlightStatus()
     }
 
@@ -368,11 +437,47 @@ open class CrazyFlie: NSObject {
         requiresArming = false
         armingState = .unavailable
         isDetectingDeviceType = false
+        isDemoMode = false
         pendingArmingTarget = nil
         hasSentZeroThrustPacket = false
+        lastCommanderLogSignature = nil
     }
 
     private func packet(header: UInt8, payload: [UInt8]) -> Data {
         return Data([header] + payload)
+    }
+
+    private func logCommanderPacket(roll: Float, pitch: Float, thrust: Float, yaw: Float, simulated: Bool) {
+        let signature = String(format: "r%.1f_p%.1f_y%.1f_t%.0f", roll, pitch, yaw, thrust)
+        guard signature != lastCommanderLogSignature else {
+            return
+        }
+
+        lastCommanderLogSignature = signature
+        appendDebugLog(String(format: "%@ Legacy 0x30 -> roll %.1f pitch %.1f yaw %.1f thrust %.0f",
+                              simulated ? "DEMO" : "TX",
+                              roll,
+                              pitch,
+                              yaw,
+                              thrust))
+    }
+
+    private func appendDebugLog(_ message: String) {
+        let line = "[\(timestamp())] \(message)"
+        debugLogLines.append(line)
+
+        if debugLogLines.count > 14 {
+            debugLogLines.removeFirst(debugLogLines.count - 14)
+        }
+
+        debugLogText = debugLogLines.joined(separator: "\n")
+        print(line)
+        delegate?.didUpdateFlightStatus()
+    }
+
+    private func timestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: Date())
     }
 }
