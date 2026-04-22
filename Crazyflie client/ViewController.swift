@@ -41,7 +41,13 @@ final class ViewController: UIViewController {
         super.viewWillAppear(animated)
         
         viewModel?.loadSettings()
+        applyTheme()
         updateUI()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyTheme()
     }
     
     override var prefersStatusBarHidden: Bool {
@@ -72,15 +78,11 @@ final class ViewController: UIViewController {
         guard let viewModel = viewModel else { return }
         connectProgress.progress = 0
         
-        connectButton.layer.borderColor = connectButton.tintColor.cgColor
-        armButton.layer.borderColor = armButton.tintColor.cgColor
-        demoButton.layer.borderColor = demoButton.tintColor.cgColor
-        settingsButton.layer.borderColor = settingsButton.tintColor.cgColor
-        debugTextView.layer.borderColor = UIColor.lightGray.cgColor
         debugTextView.layer.borderWidth = 1
         debugTextView.layer.cornerRadius = 4
         debugTextView.isEditable = false
         debugTextView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+        applyTheme()
         
         //Init joysticks
         let frame = UIScreen.main.bounds
@@ -98,6 +100,28 @@ final class ViewController: UIViewController {
         rightViewModel.add(observer: viewModel)
         rightView.addSubview(rightJoystick)
         self.rightJoystick = rightJoystick
+    }
+
+    private func applyTheme() {
+        let accentColor = UIColor.systemBlue
+
+        view.backgroundColor = .systemBackground
+        leftView.backgroundColor = .clear
+        rightView.backgroundColor = .clear
+
+        unlockLabel.textColor = .label
+        debugTextView.backgroundColor = .secondarySystemBackground
+        debugTextView.textColor = .label
+        debugTextView.keyboardAppearance = traitCollection.userInterfaceStyle == .dark ? .dark : .light
+        debugTextView.layer.borderColor = UIColor.separator.cgColor
+
+        connectProgress.progressTintColor = accentColor
+        connectProgress.trackTintColor = .tertiarySystemFill
+
+        connectButton.layer.borderColor = accentColor.cgColor
+        armButton.layer.borderColor = accentColor.cgColor
+        demoButton.layer.borderColor = accentColor.cgColor
+        settingsButton.layer.borderColor = accentColor.cgColor
     }
     
     fileprivate func updateUI() {

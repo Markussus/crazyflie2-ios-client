@@ -47,7 +47,6 @@ final class BCJoystick: UIControl {
         self.viewModel = viewModel
         
         shapeLayer = CAShapeLayer()
-        shapeLayer.fillColor = UIColor(red: 0, green: 122.0/255.0, blue: 1.0, alpha: 0.25).cgColor
         layer.addSublayer(shapeLayer)
         
         vProgress = UIProgressView(progressViewStyle: .default)
@@ -78,10 +77,17 @@ final class BCJoystick: UIControl {
         addSubview(vLabel)
         addSubview(hProgress)
         addSubview(hLabel)
+
+        applyTheme()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyTheme()
     }
     
     //MARK: - Private Methods
@@ -118,6 +124,17 @@ final class BCJoystick: UIControl {
         }
         
         sendActions(for: .allTouchEvents)
+    }
+
+    private func applyTheme() {
+        let accentColor = UIColor.systemBlue
+        shapeLayer.fillColor = accentColor.withAlphaComponent(0.25).cgColor
+        vLabel.textColor = accentColor.withAlphaComponent(0.85)
+        hLabel.textColor = accentColor.withAlphaComponent(0.85)
+        vProgress.progressTintColor = accentColor
+        hProgress.progressTintColor = accentColor
+        vProgress.trackTintColor = UIColor.tertiarySystemFill
+        hProgress.trackTintColor = UIColor.tertiarySystemFill
     }
     
     //MARK: - Touches Methods

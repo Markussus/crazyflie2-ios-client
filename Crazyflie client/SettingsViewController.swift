@@ -33,7 +33,13 @@ final class SettingsViewController: UIViewController {
         super.viewWillAppear(animated)
         
         viewModel?.delegate = self
+        applyTheme()
         updateUI()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyTheme()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -45,10 +51,25 @@ final class SettingsViewController: UIViewController {
     // MARK: - Private Methods
     
     private func setupUI() {
-        closeButton.layer.borderColor = closeButton.tintColor.cgColor
+        applyTheme()
         
         if MotionLink().canAccessMotion {
             controlModeSelector.insertSegment(withTitle: "Tilt Mode", at: 4, animated: true)
+        }
+    }
+
+    private func applyTheme() {
+        view.backgroundColor = .systemBackground
+        closeButton.layer.borderColor = UIColor.systemBlue.cgColor
+
+        [pitchrollSensitivity, thrustSensitivity, yawSensitivity].forEach {
+            $0?.backgroundColor = .secondarySystemBackground
+            $0?.textColor = .label
+            $0?.keyboardAppearance = traitCollection.userInterfaceStyle == .dark ? .dark : .light
+        }
+
+        [leftXLabel, leftYLabel, rightXLabel, rightYLabel].forEach {
+            $0?.textColor = .label
         }
     }
     
