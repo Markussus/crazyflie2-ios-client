@@ -255,20 +255,26 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         contentView.addSubview(stackView)
 
         stackView.axis = .vertical
-        stackView.spacing = 16
+        stackView.spacing = 20
         stackView.alignment = .fill
+        stackView.isLayoutMarginsRelativeArrangement = true
+        stackView.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
 
         titleLabel.text = "Advanced Options"
         titleLabel.font = UIFont.boldSystemFont(ofSize: 26)
         titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 1
 
         landingDurationLabel.text = "Landing Duration (s)"
         landingDurationLabel.font = UIFont.boldSystemFont(ofSize: 17)
         landingDurationLabel.textAlignment = .center
+        landingDurationLabel.numberOfLines = 1
 
         landingDurationSlider.minimumValue = SafeLandingSettings.minDuration
         landingDurationSlider.maximumValue = SafeLandingSettings.maxDuration
         landingDurationSlider.addTarget(self, action: #selector(landingDurationSliderChanged), for: .valueChanged)
+        landingDurationSlider.translatesAutoresizingMaskIntoConstraints = false
+        landingDurationSlider.heightAnchor.constraint(equalToConstant: 44).isActive = true
 
         landingDurationTextField.translatesAutoresizingMaskIntoConstraints = false
         landingDurationTextField.borderStyle = .roundedRect
@@ -277,12 +283,15 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         landingDurationTextField.delegate = self
         landingDurationTextField.addTarget(self, action: #selector(landingDurationEditingDidEnd), for: .editingDidEnd)
         landingDurationTextField.widthAnchor.constraint(equalToConstant: 90).isActive = true
+        landingDurationTextField.heightAnchor.constraint(equalToConstant: 40).isActive = true
 
         closeButton.setTitle("Close", for: .normal)
         closeButton.layer.cornerRadius = 4
         closeButton.layer.borderWidth = 1
         closeButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 22, bottom: 10, right: 22)
         closeButton.addTarget(self, action: #selector(closeClicked), for: .touchUpInside)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        closeButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
 
         safeLandingSwitch.addTarget(self, action: #selector(safeLandingChanged), for: .valueChanged)
         darkModeSwitch.addTarget(self, action: #selector(darkModeChanged), for: .valueChanged)
@@ -316,10 +325,10 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
             stackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20),
-            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 1420)
+            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 420)
         ])
 
-        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 860)
+        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 340)
         preferredStackWidthConstraint?.priority = UILayoutPriority(999)
         preferredStackWidthConstraint?.isActive = true
     }
@@ -331,8 +340,8 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         let row = UIStackView(arrangedSubviews: [label, control])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 16
-        row.distribution = .fillProportionally
+        row.spacing = 12
+        row.distribution = .fill
         return row
     }
 
@@ -340,7 +349,8 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         let row = UIStackView(arrangedSubviews: views)
         row.axis = .horizontal
         row.alignment = .center
-        row.distribution = .equalCentering
+        row.distribution = .center
+        row.spacing = 12
         return row
     }
 
