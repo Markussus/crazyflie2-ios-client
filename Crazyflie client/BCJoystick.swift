@@ -129,7 +129,7 @@ final class BCJoystick: UIControl {
 
     private func applyTheme() {
         let accentColor = AppTheme.accentColor
-        shapeLayer.fillColor = accentColor.withAlphaComponent(0).cgColor
+        shapeLayer.fillColor = accentColor.withAlphaComponent(0.25).cgColor
         vLabel.textColor = accentColor.withAlphaComponent(0.85)
         hLabel.textColor = accentColor.withAlphaComponent(0.85)
         vProgress.progressTintColor = accentColor
