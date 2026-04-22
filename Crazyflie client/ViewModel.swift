@@ -60,6 +60,83 @@ final class ViewModel {
     var bothThumbsOnJoystick: Bool {
         return leftJoystickProvider.activated && rightJoystickProvider.activated
     }
+
+    var showsArmButton: Bool {
+        guard let crazyFlie = crazyFlie else {
+            return false
+        }
+
+        return crazyFlie.state == .connected && crazyFlie.requiresArming
+    }
+
+    var armButtonTitle: String {
+        guard let armingState = crazyFlie?.armingState else {
+            return "Arm"
+        }
+
+        switch armingState {
+        case .arming:
+            return "Arming..."
+        case .armed:
+            return "Disarm"
+        case .disarming:
+            return "Disarming..."
+        case .disarmed, .unavailable:
+            return "Arm"
+        }
+    }
+
+    var isArmButtonEnabled: Bool {
+        guard let crazyFlie = crazyFlie, showsArmButton else {
+            return false
+        }
+
+        switch crazyFlie.armingState {
+        case .arming, .disarming:
+            return false
+        default:
+            return true
+        }
+    }
+
+    var statusText: String {
+        guard let crazyFlie = crazyFlie else {
+            return "Place both thumbs to enable control"
+        }
+
+        if crazyFlie.state == .connected && crazyFlie.isDetectingDeviceType {
+            return "Detecting Crazyflie type..."
+        }
+
+        if showsArmButton {
+            switch crazyFlie.armingState {
+            case .arming:
+                return "Arming brushless system..."
+            case .armed:
+                return bothThumbsOnJoystick ? "Brushless armed" : "Brushless armed. Place both thumbs to enable control"
+            case .disarming:
+                return "Disarming brushless system..."
+            case .disarmed:
+                return "Brushless connected. Tap Arm to enable control"
+            case .unavailable:
+                return "Detecting Crazyflie type..."
+            }
+        }
+
+        return "Place both thumbs to enable control"
+    }
+
+    var shouldHideStatusText: Bool {
+        if crazyFlie?.isDetectingDeviceType == true {
+            return false
+        }
+
+        if showsArmButton {
+            return bothThumbsOnJoystick && crazyFlie?.armingState == .armed
+        }
+
+        return bothThumbsOnJoystick
+    }
     
     lazy var settingsViewModel: SettingsViewModel? = {
         guard let bluetoothLink = self.crazyFlie?.bluetoothLink else {
@@ -78,6 +155,10 @@ final class ViewModel {
     
     func connect() {
         crazyFlie?.connect(nil)
+    }
+
+    func toggleArm() {
+        crazyFlie?.toggleArm()
     }
     
     // MARK: - Private Methods
@@ -187,6 +268,10 @@ extension ViewModel: CrazyFlieDelegate {
     
     func didUpdate(state: CrazyFlieState) {
         updateWith(state: state)
+        delegate?.signalUpdate()
+    }
+
+    func didUpdateFlightStatus() {
         delegate?.signalUpdate()
     }
     

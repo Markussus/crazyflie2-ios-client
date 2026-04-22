@@ -16,6 +16,7 @@ final class ViewController: UIViewController {
     private var settingsViewController: SettingsViewController?
     
     @IBOutlet weak var unlockLabel: UILabel!
+    @IBOutlet weak var armButton: UIButton!
     @IBOutlet weak var connectButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var connectProgress: UIProgressView!
@@ -50,6 +51,10 @@ final class ViewController: UIViewController {
     @IBAction func connectClicked(_ sender: Any) {
         viewModel?.connect()
     }
+
+    @IBAction func armClicked(_ sender: Any) {
+        viewModel?.toggleArm()
+    }
     
     @IBAction func settingsClicked(_ sender: Any) {
         performSegue(withIdentifier: "settings", sender: nil)
@@ -62,6 +67,7 @@ final class ViewController: UIViewController {
         connectProgress.progress = 0
         
         connectButton.layer.borderColor = connectButton.tintColor.cgColor
+        armButton.layer.borderColor = armButton.tintColor.cgColor
         settingsButton.layer.borderColor = settingsButton.tintColor.cgColor
         
         //Init joysticks
@@ -86,7 +92,11 @@ final class ViewController: UIViewController {
         guard let viewModel = viewModel else {
             return
         }
-        unlockLabel.isHidden = viewModel.bothThumbsOnJoystick
+        unlockLabel.isHidden = viewModel.shouldHideStatusText
+        unlockLabel.text = viewModel.statusText
+        armButton.isHidden = !viewModel.showsArmButton
+        armButton.isEnabled = viewModel.isArmButtonEnabled
+        armButton.setTitle(viewModel.armButtonTitle, for: .normal)
         
         leftJoystick?.hLabel.text = viewModel.leftXTitle
         leftJoystick?.vLabel.text = viewModel.leftYTitle

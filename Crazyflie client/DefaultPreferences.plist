@@ -4,6 +4,8 @@
 <dict>
 	<key>controlMode</key>
 	<integer>3</integer>
+	<key>forceBrushlessArmControl</key>
+	<false/>
 	<key>sensitivitySettings</key>
 	<string>slow</string>
 	<key>sensitivities</key>

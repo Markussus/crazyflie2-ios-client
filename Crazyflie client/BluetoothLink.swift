@@ -46,6 +46,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     var stateCallback: ((NSString) -> ())?
     var txCallback: ((Bool) -> ())?
     var rxCallback: ((Data) -> ())?
+    private(set) var connectedName: String?
     
     fileprivate var centralManager: CBCentralManager?
     fileprivate var peripheralBLE: CBPeripheral?
@@ -169,6 +170,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         crazyflie = peripheral
+        connectedName = peripheral.name
         
         NSLog("Crazyflie connected, refreshing services ...")
         
@@ -289,6 +291,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         connectingPeripheral = nil
         crazyflie = nil
         crtpCharacteristic = nil
+        connectedName = nil
         
         state = "idle"
         error = "Disconnected"
@@ -305,6 +308,10 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     
     func onStateUpdated(_ callback: @escaping (NSString) -> ()) {
         stateCallback = callback
+    }
+
+    func onPacketReceived(_ callback: @escaping (Data) -> ()) {
+        rxCallback = callback
     }
     
     
