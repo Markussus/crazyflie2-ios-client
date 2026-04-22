@@ -330,7 +330,24 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         label.text = text
         label.font = UIFont.systemFont(ofSize: 17, weight: .medium)
 
-        let row = UIStackView(arrangedSubviews: [label, control])
+        let switchContainer = UIView()
+        switchContainer.translatesAutoresizingMaskIntoConstraints = false
+        switchContainer.layer.cornerRadius = 8
+        if !AppTheme.isDarkModeEnabled {
+            switchContainer.backgroundColor = UIColor.systemGray5
+        } else {
+            switchContainer.backgroundColor = .clear
+        }
+        switchContainer.addSubview(control)
+
+        control.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            control.centerYAnchor.constraint(equalTo: switchContainer.centerYAnchor),
+            control.centerXAnchor.constraint(equalTo: switchContainer.centerXAnchor),
+            switchContainer.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        let row = UIStackView(arrangedSubviews: [label, switchContainer])
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 16
@@ -357,7 +374,11 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         }
 
         [safeLandingSwitch, darkModeSwitch, demoButtonSwitch, debugLogSwitch].forEach {
-            $0.onTintColor = AppTheme.accentColor
+            if AppTheme.isDarkModeEnabled {
+                $0.onTintColor = AppTheme.accentColor
+            } else {
+                $0.onTintColor = UIColor.systemBlue
+            }
         }
 
         landingDurationSlider.tintColor = AppTheme.accentColor
