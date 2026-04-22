@@ -316,10 +316,10 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
             stackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20),
-            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 420)
+            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 1420)
         ])
 
-        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 360)
+        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 860)
         preferredStackWidthConstraint?.priority = UILayoutPriority(999)
         preferredStackWidthConstraint?.isActive = true
     }
