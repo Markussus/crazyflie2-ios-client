@@ -320,17 +320,11 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            stackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20),
-            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 800)
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
         ])
-
-        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 650)
-        preferredStackWidthConstraint?.priority = UILayoutPriority(999)
-        preferredStackWidthConstraint?.isActive = true
     }
 
     private func makeSwitchRow(label: UILabel, text: String, control: UISwitch) -> UIView {
