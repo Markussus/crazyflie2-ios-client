@@ -255,10 +255,9 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         contentView.addSubview(stackView)
 
         stackView.axis = .vertical
-        stackView.spacing = 20
+        stackView.spacing = 16
         stackView.alignment = .fill
-        stackView.isLayoutMarginsRelativeArrangement = true
-        stackView.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        stackView.distribution = .fill
 
         titleLabel.text = "Advanced Options"
         titleLabel.font = UIFont.boldSystemFont(ofSize: 26)
@@ -320,10 +319,10 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
     }
 
@@ -334,8 +333,8 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         let row = UIStackView(arrangedSubviews: [label, control])
         row.axis = .horizontal
         row.alignment = .center
-        row.spacing = 12
-        row.distribution = .fill
+        row.spacing = 16
+        row.distribution = .equalSpacing
         return row
     }
 
