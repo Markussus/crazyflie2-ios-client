@@ -6,6 +6,10 @@
 	<integer>3</integer>
 	<key>darkModeEnabled</key>
 	<false/>
+	<key>showDebugLog</key>
+	<false/>
+	<key>showDemoButton</key>
+	<false/>
 	<key>safeLandingDuration</key>
 	<real>3</real>
 	<key>safeLandingEnabled</key>

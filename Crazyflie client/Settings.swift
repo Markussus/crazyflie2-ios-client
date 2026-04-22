@@ -112,6 +112,36 @@ enum SafeLandingSettings {
     }
 }
 
+enum AdvancedOptionsSettings {
+    private static let showDemoButtonKey = "showDemoButton"
+    private static let showDebugLogKey = "showDebugLog"
+
+    static var showDemoButton: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: showDemoButtonKey)
+        }
+        set {
+            let defaults = UserDefaults.standard
+            defaults.set(newValue, forKey: showDemoButtonKey)
+            if newValue == false {
+                defaults.set(false, forKey: showDebugLogKey)
+            }
+            defaults.synchronize()
+        }
+    }
+
+    static var showDebugLog: Bool {
+        get {
+            return showDemoButton && UserDefaults.standard.bool(forKey: showDebugLogKey)
+        }
+        set {
+            let defaults = UserDefaults.standard
+            defaults.set(showDemoButton && newValue, forKey: showDebugLogKey)
+            defaults.synchronize()
+        }
+    }
+}
+
 enum Sensitivity: String {
     case slow = "slow"
     case fast = "fast"

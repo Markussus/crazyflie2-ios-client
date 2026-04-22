@@ -389,6 +389,24 @@
                                     <action selector="endEditing:" destination="yUo-2Y-gx5" eventType="editingDidEnd" id="mep-QT-yZ9"/>
                                 </connections>
                             </textField>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ioM-rz-J4Q">
+                                <rect key="frame" x="261" y="307" width="146" height="24"/>
+                                <inset key="contentEdgeInsets" minX="9" minY="3" maxX="9" maxY="3"/>
+                                <state key="normal" title="Advanced Options">
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.borderWidth">
+                                        <integer key="value" value="1"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="4"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <action selector="advancedOptionsClicked:" destination="yUo-2Y-gx5" eventType="touchUpInside" id="L3W-rh-6mN"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bIQ-OS-LEN">
                                 <rect key="frame" x="305" y="343" width="57" height="24"/>
                                 <inset key="contentEdgeInsets" minX="9" minY="3" maxX="9" maxY="3"/>
@@ -410,6 +428,7 @@
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstAttribute="centerX" secondItem="ioM-rz-J4Q" secondAttribute="centerX" id="0Ih-oI-lRl"/>
                             <constraint firstAttribute="centerX" secondItem="bIQ-OS-LEN" secondAttribute="centerX" id="0rm-Tn-lla"/>
                             <constraint firstItem="5IL-OB-UG4" firstAttribute="top" secondItem="JjT-No-3IF" secondAttribute="bottom" constant="8" id="14g-BN-LVE"/>
                             <constraint firstAttribute="centerX" secondItem="KG7-5N-8dT" secondAttribute="centerX" id="4Qi-EI-1za"/>
@@ -443,6 +462,7 @@
                             <constraint firstItem="l9j-43-wO3" firstAttribute="centerY" secondItem="sw8-z9-Dxc" secondAttribute="centerY" id="rW2-J3-2r3"/>
                             <constraint firstItem="l9j-43-wO3" firstAttribute="leading" secondItem="sw8-z9-Dxc" secondAttribute="trailing" constant="12" id="s11-dL-iD1"/>
                             <constraint firstItem="frN-5W-BJR" firstAttribute="top" secondItem="bIQ-OS-LEN" secondAttribute="bottom" constant="8" id="s36-H0-rO6"/>
+                            <constraint firstItem="bIQ-OS-LEN" firstAttribute="top" secondItem="ioM-rz-J4Q" secondAttribute="bottom" constant="12" id="sQt-i2-z0t"/>
                             <constraint firstItem="NZL-AI-lbD" firstAttribute="top" secondItem="jXZ-mU-dkA" secondAttribute="bottom" constant="8" id="sZa-SG-NRP"/>
                             <constraint firstItem="6Q5-V8-FLl" firstAttribute="centerY" secondItem="sw8-z9-Dxc" secondAttribute="centerY" id="t2j-U6-vRv"/>
                             <constraint firstItem="P81-zl-xX5" firstAttribute="centerY" secondItem="6Q5-V8-FLl" secondAttribute="centerY" id="t3o-vV-DYt"/>
@@ -464,6 +484,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="advancedOptionsButton" destination="ioM-rz-J4Q" id="VTa-njy-sI0"/>
                         <outlet property="closeButton" destination="bIQ-OS-LEN" id="S7d-r9-o2W"/>
                         <outlet property="controlModeSelector" destination="vR0-g5-k3n" id="Y7K-oN-NZE"/>
                         <outlet property="darkModeLabel" destination="sw8-z9-Dxc" id="ZnJ-Ym-UxQ"/>

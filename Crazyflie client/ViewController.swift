@@ -125,10 +125,11 @@ final class ViewController: UIViewController {
         connectProgress.progressTintColor = accentColor
         connectProgress.trackTintColor = AppTheme.progressTrackColor
 
-        connectButton.layer.borderColor = accentColor.cgColor
-        armButton.layer.borderColor = accentColor.cgColor
-        demoButton.layer.borderColor = accentColor.cgColor
-        settingsButton.layer.borderColor = accentColor.cgColor
+        [connectButton, armButton, demoButton, settingsButton].forEach {
+            $0?.layer.borderColor = accentColor.cgColor
+            $0?.setTitleColor(accentColor, for: .normal)
+            $0?.setTitleColor(accentColor.withAlphaComponent(0.45), for: .disabled)
+        }
     }
     
     fileprivate func updateUI() {
@@ -142,11 +143,13 @@ final class ViewController: UIViewController {
         armButton.isHidden = !viewModel.showsArmButton
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)
+        demoButton.isHidden = !viewModel.showsDemoButton
         demoButton.isEnabled = viewModel.isDemoButtonEnabled
         demoButton.setTitle(viewModel.demoButtonTitle, for: .normal)
+        debugTextView.isHidden = !viewModel.showsDebugLog
         debugTextView.text = viewModel.debugLogText
 
-        if !debugTextView.text.isEmpty {
+        if !debugTextView.isHidden && !debugTextView.text.isEmpty {
             let range = NSRange(location: debugTextView.text.count - 1, length: 1)
             debugTextView.scrollRangeToVisible(range)
         }
@@ -169,6 +172,7 @@ final class ViewController: UIViewController {
             }
             
             viewController.viewModel = viewModel?.settingsViewModel
+            viewController.flightViewModel = viewModel
         }
     }
 

@@ -90,6 +90,14 @@ final class ViewModel {
         return crazyFlie?.debugLogText ?? "Debug log ready."
     }
 
+    var showsDemoButton: Bool {
+        return AdvancedOptionsSettings.showDemoButton
+    }
+
+    var showsDebugLog: Bool {
+        return AdvancedOptionsSettings.showDebugLog
+    }
+
     var isSafeLandingActive: Bool {
         return safeLandingCommander?.isSafeLandingActive == true
     }
@@ -200,6 +208,21 @@ final class ViewModel {
 
     func toggleDemoMode() {
         crazyFlie?.toggleDemoSession()
+    }
+
+    func setDemoButtonVisible(_ isVisible: Bool) {
+        AdvancedOptionsSettings.showDemoButton = isVisible
+
+        if isVisible == false, crazyFlie?.isDemoMode == true {
+            crazyFlie?.toggleDemoSession()
+        }
+
+        delegate?.signalUpdate()
+    }
+
+    func setDebugLogVisible(_ isVisible: Bool) {
+        AdvancedOptionsSettings.showDebugLog = isVisible
+        delegate?.signalUpdate()
     }
     
     // MARK: - Private Methods
