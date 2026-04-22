@@ -45,6 +45,7 @@ final class BCJoystick: UIControl {
         super.init(frame: frame)
         
         self.viewModel = viewModel
+        backgroundColor = .clear
         
         shapeLayer = CAShapeLayer()
         layer.addSublayer(shapeLayer)

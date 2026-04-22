@@ -106,8 +106,13 @@ final class ViewController: UIViewController {
         let accentColor = AppTheme.accentColor
 
         view.backgroundColor = AppTheme.backgroundColor
-        leftView.backgroundColor = .clear
-        rightView.backgroundColor = .clear
+        [leftView, rightView].forEach {
+            $0?.backgroundColor = AppTheme.secondaryBackgroundColor
+            $0?.layer.cornerRadius = 18
+            $0?.layer.borderWidth = 1
+            $0?.layer.borderColor = AppTheme.separatorColor.cgColor
+            $0?.clipsToBounds = true
+        }
 
         unlockLabel.textColor = AppTheme.primaryTextColor
         debugTextView.backgroundColor = AppTheme.secondaryBackgroundColor
