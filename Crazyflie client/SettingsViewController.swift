@@ -255,7 +255,7 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         contentView.addSubview(stackView)
 
         stackView.axis = .vertical
-        stackView.spacing = 16
+        stackView.spacing = 12
         stackView.alignment = .fill
         stackView.distribution = .fill
 
@@ -273,7 +273,7 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         landingDurationSlider.maximumValue = SafeLandingSettings.maxDuration
         landingDurationSlider.addTarget(self, action: #selector(landingDurationSliderChanged), for: .valueChanged)
         landingDurationSlider.translatesAutoresizingMaskIntoConstraints = false
-        landingDurationSlider.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        landingDurationSlider.heightAnchor.constraint(equalToConstant: 36).isActive = true
 
         landingDurationTextField.translatesAutoresizingMaskIntoConstraints = false
         landingDurationTextField.borderStyle = .roundedRect
@@ -281,16 +281,16 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         landingDurationTextField.textAlignment = .center
         landingDurationTextField.delegate = self
         landingDurationTextField.addTarget(self, action: #selector(landingDurationEditingDidEnd), for: .editingDidEnd)
-        landingDurationTextField.widthAnchor.constraint(equalToConstant: 90).isActive = true
-        landingDurationTextField.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        landingDurationTextField.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        landingDurationTextField.heightAnchor.constraint(equalToConstant: 36).isActive = true
 
         closeButton.setTitle("Close", for: .normal)
         closeButton.layer.cornerRadius = 4
         closeButton.layer.borderWidth = 1
-        closeButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 22, bottom: 10, right: 22)
+        closeButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 20, bottom: 8, right: 20)
         closeButton.addTarget(self, action: #selector(closeClicked), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: 36).isActive = true
 
         safeLandingSwitch.addTarget(self, action: #selector(safeLandingChanged), for: .valueChanged)
         darkModeSwitch.addTarget(self, action: #selector(darkModeChanged), for: .valueChanged)
@@ -319,8 +319,8 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 56),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -56),
             stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
