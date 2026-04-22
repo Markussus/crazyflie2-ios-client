@@ -16,6 +16,7 @@ final class ViewController: UIViewController {
     private var settingsViewController: SettingsViewController?
     
     @IBOutlet weak var unlockLabel: UILabel!
+    @IBOutlet weak var safeLandingLabel: UILabel!
     @IBOutlet weak var armButton: UIButton!
     @IBOutlet weak var demoButton: UIButton!
     @IBOutlet weak var debugTextView: UITextView!
@@ -115,6 +116,7 @@ final class ViewController: UIViewController {
         }
 
         unlockLabel.textColor = AppTheme.primaryTextColor
+        safeLandingLabel.textColor = UIColor(red: 0.83, green: 0.14, blue: 0.12, alpha: 1.0)
         debugTextView.backgroundColor = AppTheme.secondaryBackgroundColor
         debugTextView.textColor = AppTheme.primaryTextColor
         debugTextView.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
@@ -135,6 +137,8 @@ final class ViewController: UIViewController {
         }
         unlockLabel.isHidden = viewModel.shouldHideStatusText
         unlockLabel.text = viewModel.statusText
+        safeLandingLabel.isHidden = !viewModel.isSafeLandingActive
+        safeLandingLabel.text = viewModel.safeLandingWarningText
         armButton.isHidden = !viewModel.showsArmButton
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)

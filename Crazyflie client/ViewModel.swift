@@ -20,6 +20,7 @@ final class ViewModel {
     
     private var motionLink: MotionLink?
     private var crazyFlie: CrazyFlie?
+    private var safeLandingCommander: SafeLandingCrazyFlieCommander?
     private var sensitivity: Sensitivity = .slow
     private var controlMode: ControlMode = ControlMode.current ?? .mode1
     
@@ -89,6 +90,14 @@ final class ViewModel {
         return crazyFlie?.debugLogText ?? "Debug log ready."
     }
 
+    var isSafeLandingActive: Bool {
+        return safeLandingCommander?.isSafeLandingActive == true
+    }
+
+    var safeLandingWarningText: String {
+        return "Safe landing in progress"
+    }
+
     var armButtonTitle: String {
         guard let armingState = crazyFlie?.armingState else {
             return "Arm"
@@ -124,6 +133,10 @@ final class ViewModel {
             return "Place both thumbs to enable control"
         }
 
+        if isSafeLandingActive {
+            return "Place both thumbs to enable control"
+        }
+
         if crazyFlie.state == .connected && crazyFlie.isDetectingDeviceType {
             return "Detecting Crazyflie type..."
         }
@@ -147,6 +160,10 @@ final class ViewModel {
     }
 
     var shouldHideStatusText: Bool {
+        if isSafeLandingActive {
+            return false
+        }
+
         if crazyFlie?.isDetectingDeviceType == true {
             return false
         }
@@ -242,11 +259,26 @@ final class ViewModel {
     }
     
     private func applyCommander() {
-        crazyFlie?.commander = controlMode.commander(
+        guard let commander = controlMode.commander(
             leftJoystick: leftJoystickProvider,
             rightJoystick: rightJoystickProvider,
             motionLink: motionLink,
-            settings: sensitivity.settings)
+            settings: sensitivity.settings) else {
+            crazyFlie?.commander = nil
+            safeLandingCommander = nil
+            return
+        }
+
+        let landingCommander = SafeLandingCrazyFlieCommander(wrapping: commander)
+        landingCommander.onStateChanged = { [weak self] in
+            self?.delegate?.signalUpdate()
+        }
+        landingCommander.onLandingCompleted = { [weak self] in
+            self?.crazyFlie?.disarmIfNeededAfterSafeLanding()
+        }
+
+        safeLandingCommander = landingCommander
+        crazyFlie?.commander = landingCommander
     }
     
     fileprivate func updateWith(state: CrazyFlieState) {
@@ -273,6 +305,11 @@ final class ViewModel {
 extension ViewModel: BCJoystickViewModelObserver {
     func didUpdateState() {
         calibrateMotionIfNeeded()
+
+        if crazyFlie?.state == .connected {
+            safeLandingCommander?.updateThumbState(leftActive: leftJoystickProvider.activated,
+                                                   rightActive: rightJoystickProvider.activated)
+        }
         
         delegate?.signalUpdate()
     }
@@ -291,6 +328,9 @@ extension ViewModel: CrazyFlieDelegate {
     }
     
     func didUpdate(state: CrazyFlieState) {
+        if state != .connected {
+            safeLandingCommander?.resetSession()
+        }
         updateWith(state: state)
         delegate?.signalUpdate()
     }

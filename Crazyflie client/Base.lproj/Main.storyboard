@@ -120,6 +120,11 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Safe landing in progress" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1Ia-P0-V4Y">
+                                <rect key="frame" x="238" y="159" width="191.5" height="21"/>
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="Debug log ready." textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="n1q-Ct-Dck">
                                 <rect key="frame" x="213.5" y="266" width="240" height="69"/>
                                 <color key="backgroundColor" red="0.97593549740000003" green="0.97595614190000005" blue="0.97594732049999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -130,6 +135,7 @@
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="uYX-Ot-m4w" firstAttribute="top" secondItem="Ta2-ZF-aps" secondAttribute="bottom" id="5TC-Jp-58p"/>
+                            <constraint firstAttribute="centerX" secondItem="1Ia-P0-V4Y" secondAttribute="centerX" id="5n1-H8-kxd"/>
                             <constraint firstAttribute="centerX" secondItem="M4K-nN-6na" secondAttribute="centerX" constant="-0.5" id="6WK-k2-o82"/>
                             <constraint firstItem="zUR-3g-aLF" firstAttribute="top" secondItem="ax9-lF-Vx6" secondAttribute="bottom" constant="10" id="6gd-WA-22v"/>
                             <constraint firstItem="g77-Ql-SX3" firstAttribute="top" secondItem="zUR-3g-aLF" secondAttribute="bottom" constant="8" id="3gN-vA-g0I"/>
@@ -139,6 +145,7 @@
                             <constraint firstItem="eY8-VG-3Hc" firstAttribute="width" secondItem="Ta2-ZF-aps" secondAttribute="width" id="Hh7-Wu-PJk"/>
                             <constraint firstItem="ax9-lF-Vx6" firstAttribute="top" secondItem="BBt-Ae-QU0" secondAttribute="bottom" constant="20" id="J7N-Q2-gzo"/>
                             <constraint firstItem="uYX-Ot-m4w" firstAttribute="top" secondItem="cqv-t8-690" secondAttribute="bottom" constant="8" id="Mpf-Gl-daS"/>
+                            <constraint firstItem="1Ia-P0-V4Y" firstAttribute="top" secondItem="M4K-nN-6na" secondAttribute="bottom" constant="7" id="NiV-oE-R6J"/>
                             <constraint firstItem="eY8-VG-3Hc" firstAttribute="top" secondItem="BBt-Ae-QU0" secondAttribute="bottom" id="RhX-RI-kGn"/>
                             <constraint firstItem="uYX-Ot-m4w" firstAttribute="top" secondItem="eY8-VG-3Hc" secondAttribute="bottom" id="Soy-3a-5TR"/>
                             <constraint firstItem="Ta2-ZF-aps" firstAttribute="top" secondItem="BBt-Ae-QU0" secondAttribute="bottom" id="Y5F-Ct-jjf"/>
@@ -165,6 +172,7 @@
                         <outlet property="demoButton" destination="g77-Ql-SX3" id="5aW-VQ-qkG"/>
                         <outlet property="leftView" destination="Ta2-ZF-aps" id="pNk-9c-ZfP"/>
                         <outlet property="rightView" destination="eY8-VG-3Hc" id="4Uh-Me-2kp"/>
+                        <outlet property="safeLandingLabel" destination="1Ia-P0-V4Y" id="z3K-5d-efI"/>
                         <outlet property="settingsButton" destination="cqv-t8-690" id="IXn-aM-wKd"/>
                         <outlet property="unlockLabel" destination="M4K-nN-6na" id="psN-ME-O7i"/>
                         <segue destination="yUo-2Y-gx5" kind="modal" identifier="settings" id="Elg-lL-7c2"/>
@@ -338,17 +346,49 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Dark mode" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sw8-z9-Dxc">
-                                <rect key="frame" x="274.5" y="279" width="79" height="21"/>
+                                <rect key="frame" x="94" y="279" width="79" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="l9j-43-wO3">
-                                <rect key="frame" x="365.5" y="274" width="51" height="31"/>
+                                <rect key="frame" x="185" y="274" width="51" height="31"/>
                                 <connections>
                                     <action selector="darkModeChanged:" destination="yUo-2Y-gx5" eventType="valueChanged" id="O8e-6E-VcD"/>
                                 </connections>
                             </switch>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Safe Landing" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6Q5-V8-FLl">
+                                <rect key="frame" x="355" y="279" width="93" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="P81-zl-xX5">
+                                <rect key="frame" x="462" y="274" width="51" height="31"/>
+                                <connections>
+                                    <action selector="safeLandingChanged:" destination="yUo-2Y-gx5" eventType="valueChanged" id="lF4-3l-Hqg"/>
+                                </connections>
+                            </switch>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Landing Duration (s)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4oC-9W-ck2">
+                                <rect key="frame" x="258" y="300" width="150" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <slider opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="250" verticalHuggingPriority="750" value="3" minValue="1" maxValue="20" translatesAutoresizingMaskIntoConstraints="NO" id="aGn-rf-P5X">
+                                <rect key="frame" x="168" y="318" width="270" height="31"/>
+                                <connections>
+                                    <action selector="landingDurationSliderChanged:" destination="yUo-2Y-gx5" eventType="valueChanged" id="32H-eG-RDL"/>
+                                </connections>
+                            </slider>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="3" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="4X4-JL-QmV">
+                                <rect key="frame" x="462" y="314" width="60" height="34"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" keyboardType="decimalPad"/>
+                                <connections>
+                                    <action selector="endEditing:" destination="yUo-2Y-gx5" eventType="editingDidEnd" id="mep-QT-yZ9"/>
+                                </connections>
+                            </textField>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bIQ-OS-LEN">
                                 <rect key="frame" x="305" y="343" width="57" height="24"/>
                                 <inset key="contentEdgeInsets" minX="9" minY="3" maxX="9" maxY="3"/>
@@ -404,8 +444,18 @@
                             <constraint firstItem="l9j-43-wO3" firstAttribute="leading" secondItem="sw8-z9-Dxc" secondAttribute="trailing" constant="12" id="s11-dL-iD1"/>
                             <constraint firstItem="frN-5W-BJR" firstAttribute="top" secondItem="bIQ-OS-LEN" secondAttribute="bottom" constant="8" id="s36-H0-rO6"/>
                             <constraint firstItem="NZL-AI-lbD" firstAttribute="top" secondItem="jXZ-mU-dkA" secondAttribute="bottom" constant="8" id="sZa-SG-NRP"/>
-                            <constraint firstAttribute="centerX" secondItem="sw8-z9-Dxc" secondAttribute="centerX" constant="-19" id="t6M-RL-NpA"/>
+                            <constraint firstItem="6Q5-V8-FLl" firstAttribute="centerY" secondItem="sw8-z9-Dxc" secondAttribute="centerY" id="t2j-U6-vRv"/>
+                            <constraint firstItem="P81-zl-xX5" firstAttribute="centerY" secondItem="6Q5-V8-FLl" secondAttribute="centerY" id="t3o-vV-DYt"/>
+                            <constraint firstItem="P81-zl-xX5" firstAttribute="leading" secondItem="6Q5-V8-FLl" secondAttribute="trailing" constant="12" id="t47-GK-S8d"/>
+                            <constraint firstAttribute="centerX" secondItem="sw8-z9-Dxc" secondAttribute="centerX" constant="-138" id="t6M-RL-NpA"/>
+                            <constraint firstAttribute="centerX" secondItem="6Q5-V8-FLl" secondAttribute="centerX" constant="68" id="tMc-Ok-dQ8"/>
+                            <constraint firstItem="4oC-9W-ck2" firstAttribute="top" secondItem="sw8-z9-Dxc" secondAttribute="bottom" constant="13" id="u7b-JR-nh7"/>
+                            <constraint firstAttribute="centerX" secondItem="4oC-9W-ck2" secondAttribute="centerX" id="uKo-qz-EFz"/>
                             <constraint firstItem="Mcv-GC-oy1" firstAttribute="leading" secondItem="vnM-3D-UWg" secondAttribute="leadingMargin" constant="27" id="uDk-bY-ofF"/>
+                            <constraint firstItem="aGn-rf-P5X" firstAttribute="top" secondItem="4oC-9W-ck2" secondAttribute="bottom" constant="5" id="uMj-6f-uxW"/>
+                            <constraint firstAttribute="centerX" secondItem="aGn-rf-P5X" secondAttribute="centerX" constant="-32" id="uux-Sl-LdR"/>
+                            <constraint firstItem="4X4-JL-QmV" firstAttribute="leading" secondItem="aGn-rf-P5X" secondAttribute="trailing" constant="12" id="v0E-K4-yxL"/>
+                            <constraint firstItem="4X4-JL-QmV" firstAttribute="centerY" secondItem="aGn-rf-P5X" secondAttribute="centerY" id="vSo-4H-Rrn"/>
                             <constraint firstAttribute="centerX" secondItem="31V-RP-89z" secondAttribute="centerX" constant="-0.5" id="vim-xB-tAs"/>
                             <constraint firstItem="NFb-Nf-8vW" firstAttribute="top" secondItem="DAc-qy-Vle" secondAttribute="bottom" constant="8" id="whH-hd-3N9"/>
                             <constraint firstItem="Wjo-sc-lqq" firstAttribute="top" secondItem="vR0-g5-k3n" secondAttribute="bottom" constant="17" id="xf4-E0-Dfg"/>
@@ -418,11 +468,16 @@
                         <outlet property="controlModeSelector" destination="vR0-g5-k3n" id="Y7K-oN-NZE"/>
                         <outlet property="darkModeLabel" destination="sw8-z9-Dxc" id="ZnJ-Ym-UxQ"/>
                         <outlet property="darkModeSwitch" destination="l9j-43-wO3" id="fYI-io-rh4"/>
+                        <outlet property="landingDurationLabel" destination="4oC-9W-ck2" id="gPR-zY-ihH"/>
+                        <outlet property="landingDurationSlider" destination="aGn-rf-P5X" id="VbK-eJ-TZD"/>
+                        <outlet property="landingDurationTextField" destination="4X4-JL-QmV" id="WT1-4V-uDk"/>
                         <outlet property="leftXLabel" destination="Idf-eF-rSY" id="hvT-p5-UdB"/>
                         <outlet property="leftYLabel" destination="Wjo-sc-lqq" id="073-k1-Wp8"/>
                         <outlet property="pitchrollSensitivity" destination="Mcv-GC-oy1" id="vp9-Kw-dF5"/>
                         <outlet property="rightXLabel" destination="WlR-bZ-caW" id="gAc-Mc-rVh"/>
                         <outlet property="rightYLabel" destination="HiR-IU-mzC" id="G2U-R4-nJB"/>
+                        <outlet property="safeLandingLabel" destination="6Q5-V8-FLl" id="3dJ-KP-zJT"/>
+                        <outlet property="safeLandingSwitch" destination="P81-zl-xX5" id="Txf-n7-qTL"/>
                         <outlet property="sensitivitySelector" destination="DAc-qy-Vle" id="UcL-dm-S0h"/>
                         <outlet property="thrustSensitivity" destination="KG7-5N-8dT" id="Sm5-eG-eQV"/>
                         <outlet property="yawSensitivity" destination="5IL-OB-UG4" id="a4F-dV-PZa"/>

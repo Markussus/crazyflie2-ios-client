@@ -203,6 +203,14 @@ open class CrazyFlie: NSObject {
         }
     }
 
+    func disarmIfNeededAfterSafeLanding() {
+        guard state == .connected, requiresArming, armingState == .armed else {
+            return
+        }
+
+        requestArming(false)
+    }
+
     // MARK: - Private Methods
 
     private func startTimer() {

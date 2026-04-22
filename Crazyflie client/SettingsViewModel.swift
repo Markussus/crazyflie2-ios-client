@@ -59,6 +59,14 @@ final class SettingsViewModel: Observable {
     var canEditValues: Bool {
         return sensitivity == .custom
     }
+
+    var isSafeLandingEnabled: Bool {
+        return SafeLandingSettings.isEnabled
+    }
+
+    var landingDuration: Float {
+        return SafeLandingSettings.duration
+    }
     
     func didSetControlMode(at index: Int) {
         guard let controlMode = ControlMode(rawValue: index) else {
@@ -76,6 +84,19 @@ final class SettingsViewModel: Observable {
         }
         self.sensitivity = sensitivity
         delegate?.didUpdate()
+    }
+
+    func didSetSafeLandingEnabled(_ isEnabled: Bool) {
+        SafeLandingSettings.isEnabled = isEnabled
+        delegate?.didUpdate()
+    }
+
+    @discardableResult
+    func didUpdate(landingDuration: Float) -> Float {
+        let clampedDuration = SafeLandingSettings.clamp(landingDuration)
+        SafeLandingSettings.duration = clampedDuration
+        delegate?.didUpdate()
+        return clampedDuration
     }
     
     var pitch: Float? {

@@ -21,6 +21,11 @@ final class SettingsViewController: UIViewController {
     @IBOutlet weak var leftYLabel: UILabel!
     @IBOutlet weak var rightXLabel: UILabel!
     @IBOutlet weak var rightYLabel: UILabel!
+    @IBOutlet weak var safeLandingLabel: UILabel!
+    @IBOutlet weak var safeLandingSwitch: UISwitch!
+    @IBOutlet weak var landingDurationLabel: UILabel!
+    @IBOutlet weak var landingDurationSlider: UISlider!
+    @IBOutlet weak var landingDurationTextField: UITextField!
     @IBOutlet weak var darkModeLabel: UILabel!
     @IBOutlet weak var darkModeSwitch: UISwitch!
     @IBOutlet weak var closeButton: UIButton!
@@ -63,17 +68,20 @@ final class SettingsViewController: UIViewController {
     private func applyTheme() {
         view.backgroundColor = AppTheme.backgroundColor
         closeButton.layer.borderColor = AppTheme.accentColor.cgColor
+        safeLandingSwitch.onTintColor = AppTheme.accentColor
         darkModeSwitch.onTintColor = AppTheme.accentColor
 
-        [pitchrollSensitivity, thrustSensitivity, yawSensitivity].forEach {
+        [pitchrollSensitivity, thrustSensitivity, yawSensitivity, landingDurationTextField].forEach {
             $0?.backgroundColor = AppTheme.secondaryBackgroundColor
             $0?.textColor = AppTheme.primaryTextColor
             $0?.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
         }
 
-        [leftXLabel, leftYLabel, rightXLabel, rightYLabel, darkModeLabel].forEach {
+        [leftXLabel, leftYLabel, rightXLabel, rightYLabel, safeLandingLabel, landingDurationLabel, darkModeLabel].forEach {
             $0?.textColor = AppTheme.primaryTextColor
         }
+
+        landingDurationSlider.tintColor = AppTheme.accentColor
     }
     
     fileprivate func updateUI() {
@@ -88,6 +96,12 @@ final class SettingsViewController: UIViewController {
         leftYLabel.text = viewModel.leftYTitle
         rightXLabel.text = viewModel.rightXTitle
         rightYLabel.text = viewModel.rightYTitle
+        safeLandingSwitch.isOn = viewModel.isSafeLandingEnabled
+        let landingDuration = viewModel.landingDuration
+        landingDurationSlider.minimumValue = SafeLandingSettings.minDuration
+        landingDurationSlider.maximumValue = SafeLandingSettings.maxDuration
+        landingDurationSlider.value = landingDuration
+        landingDurationTextField.text = formattedLandingDuration(landingDuration)
         darkModeSwitch.isOn = AppTheme.isDarkModeEnabled
         
         if let pitch = viewModel.pitch {
@@ -112,6 +126,16 @@ final class SettingsViewController: UIViewController {
         viewModel?.didSetControlMode(at: controlModeSelector.selectedSegmentIndex)
     }
 
+    @IBAction func safeLandingChanged(_ sender: Any) {
+        viewModel?.didSetSafeLandingEnabled(safeLandingSwitch.isOn)
+    }
+
+    @IBAction func landingDurationSliderChanged(_ sender: Any) {
+        let roundedValue = round(landingDurationSlider.value * 10) / 10
+        let clampedValue = viewModel?.didUpdate(landingDuration: roundedValue) ?? roundedValue
+        syncLandingDurationControls(with: clampedValue)
+    }
+
     @IBAction func darkModeChanged(_ sender: Any) {
         AppTheme.isDarkModeEnabled = darkModeSwitch.isOn
         applyTheme()
@@ -121,16 +145,35 @@ final class SettingsViewController: UIViewController {
         if viewModel?.canEditValues == true {
             [pitchrollSensitivity, thrustSensitivity, yawSensitivity].forEach { $0.resignFirstResponder() }
         }
+        landingDurationTextField.resignFirstResponder()
         dismiss(animated: true, completion: nil)
     }
     
     @objc func endEditing(_ force: Bool) -> Bool {
-        guard viewModel?.canEditValues == true else { return false }
-        // Called only for sensitivity text fields
-        viewModel?.sensitivity.settings?.pitchRate = pitchrollSensitivity.text.flatMap(Float.init) ?? 0.0
-        viewModel?.sensitivity.settings?.maxThrust = thrustSensitivity.text.flatMap(Float.init) ?? 0.0
-        viewModel?.sensitivity.settings?.yawRate = yawSensitivity.text.flatMap(Float.init) ?? 0.0
+        if viewModel?.canEditValues == true {
+            // Called only for sensitivity text fields
+            viewModel?.sensitivity.settings?.pitchRate = pitchrollSensitivity.text.flatMap(Float.init) ?? 0.0
+            viewModel?.sensitivity.settings?.maxThrust = thrustSensitivity.text.flatMap(Float.init) ?? 0.0
+            viewModel?.sensitivity.settings?.yawRate = yawSensitivity.text.flatMap(Float.init) ?? 0.0
+        }
+
+        let durationInput = landingDurationTextField.text.flatMap(Float.init) ?? SafeLandingSettings.duration
+        let clampedDuration = viewModel?.didUpdate(landingDuration: durationInput) ?? SafeLandingSettings.clamp(durationInput)
+        syncLandingDurationControls(with: clampedDuration)
         return true
+    }
+
+    private func syncLandingDurationControls(with duration: Float) {
+        landingDurationSlider.value = duration
+        landingDurationTextField.text = formattedLandingDuration(duration)
+    }
+
+    private func formattedLandingDuration(_ duration: Float) -> String {
+        if duration.rounded(.towardZero) == duration {
+            return String(Int(duration))
+        }
+
+        return String(format: "%.1f", duration)
     }
 }
 

@@ -72,6 +72,46 @@ enum AppTheme {
     }
 }
 
+enum SafeLandingSettings {
+    private static let enabledKey = "safeLandingEnabled"
+    private static let durationKey = "safeLandingDuration"
+
+    static let minDuration: Float = 1.0
+    static let maxDuration: Float = 20.0
+    static let maxStartPercent: Float = 0.35
+
+    static var isEnabled: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: enabledKey)
+        }
+        set {
+            let defaults = UserDefaults.standard
+            defaults.set(newValue, forKey: enabledKey)
+            defaults.synchronize()
+        }
+    }
+
+    static var duration: Float {
+        get {
+            let stored = UserDefaults.standard.float(forKey: durationKey)
+            if stored == 0 {
+                return 3.0
+            }
+
+            return clamp(stored)
+        }
+        set {
+            let defaults = UserDefaults.standard
+            defaults.set(clamp(newValue), forKey: durationKey)
+            defaults.synchronize()
+        }
+    }
+
+    static func clamp(_ duration: Float) -> Float {
+        return min(max(duration, minDuration), maxDuration)
+    }
+}
+
 enum Sensitivity: String {
     case slow = "slow"
     case fast = "fast"

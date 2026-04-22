@@ -169,3 +169,127 @@ final class SimpleCrazyFlieCommander: CrazyFlieCommander {
     
     }
 }
+
+final class SafeLandingCrazyFlieCommander: CrazyFlieCommander {
+    private struct LandingSession {
+        let startedAt: Date
+        let initialThrust: Float
+        let thrustPerSecond: Float
+    }
+
+    private let wrappedCommander: CrazyFlieCommander
+    private let maxThrustValue: Float = 65535
+
+    private var landingSession: LandingSession?
+    private var hadDualThumbControl = false
+    private var previousBothThumbsActive = false
+    private var lastManualRoll: Float = 0
+    private var lastManualPitch: Float = 0
+    private var lastManualYaw: Float = 0
+    private var lastManualThrust: Float = 0
+
+    var onStateChanged: (() -> Void)?
+    var onLandingCompleted: (() -> Void)?
+
+    init(wrapping commander: CrazyFlieCommander) {
+        self.wrappedCommander = commander
+    }
+
+    var pitch: Float = 0
+    var roll: Float = 0
+    var thrust: Float = 0
+    var yaw: Float = 0
+
+    var isSafeLandingActive: Bool {
+        return landingSession != nil
+    }
+
+    func prepareData() {
+        wrappedCommander.prepareData()
+
+        if let landingSession = landingSession {
+            let elapsed = Float(Date().timeIntervalSince(landingSession.startedAt))
+            let currentThrust = max(0, landingSession.initialThrust - (landingSession.thrustPerSecond * elapsed))
+
+            roll = 0
+            pitch = 0
+            yaw = 0
+            thrust = currentThrust
+
+            if currentThrust <= 0 {
+                finishLanding()
+            }
+            return
+        }
+
+        roll = wrappedCommander.roll
+        pitch = wrappedCommander.pitch
+        yaw = wrappedCommander.yaw
+        thrust = wrappedCommander.thrust
+
+        lastManualRoll = roll
+        lastManualPitch = pitch
+        lastManualYaw = yaw
+        lastManualThrust = thrust
+    }
+
+    func updateThumbState(leftActive: Bool, rightActive: Bool) {
+        let bothThumbsActive = leftActive && rightActive
+        if bothThumbsActive {
+            hadDualThumbControl = true
+        }
+
+        let fingerReleasedDuringControl = previousBothThumbsActive && !bothThumbsActive
+        previousBothThumbsActive = bothThumbsActive
+
+        if SafeLandingSettings.isEnabled && fingerReleasedDuringControl && hadDualThumbControl && !isSafeLandingActive {
+            startLanding()
+        }
+    }
+
+    func resetSession() {
+        landingSession = nil
+        hadDualThumbControl = false
+        previousBothThumbsActive = false
+        pitch = 0
+        roll = 0
+        yaw = 0
+        thrust = 0
+        lastManualRoll = 0
+        lastManualPitch = 0
+        lastManualYaw = 0
+        lastManualThrust = 0
+        onStateChanged?()
+    }
+
+    private func startLanding() {
+        let maxLandingThrust = maxThrustValue * SafeLandingSettings.maxStartPercent
+        let startThrust = min(lastManualThrust, maxLandingThrust)
+        let thrustPerSecond = maxLandingThrust / SafeLandingSettings.duration
+
+        roll = 0
+        pitch = 0
+        yaw = 0
+        thrust = max(0, startThrust)
+        landingSession = LandingSession(startedAt: Date(),
+                                        initialThrust: max(0, startThrust),
+                                        thrustPerSecond: thrustPerSecond)
+        onStateChanged?()
+
+        if startThrust <= 0 {
+            finishLanding()
+        }
+    }
+
+    private func finishLanding() {
+        landingSession = nil
+        roll = 0
+        pitch = 0
+        yaw = 0
+        thrust = 0
+        hadDualThumbControl = false
+        previousBothThumbsActive = false
+        onStateChanged?()
+        onLandingCompleted?()
+    }
+}
