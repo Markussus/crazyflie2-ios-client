@@ -297,6 +297,11 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         demoButtonSwitch.addTarget(self, action: #selector(demoButtonChanged), for: .valueChanged)
         debugLogSwitch.addTarget(self, action: #selector(debugLogChanged), for: .valueChanged)
 
+        safeLandingSwitch.addTarget(self, action: #selector(updateSwitchColors), for: .valueChanged)
+        darkModeSwitch.addTarget(self, action: #selector(updateSwitchColors), for: .valueChanged)
+        demoButtonSwitch.addTarget(self, action: #selector(updateSwitchColors), for: .valueChanged)
+        debugLogSwitch.addTarget(self, action: #selector(updateSwitchColors), for: .valueChanged)
+
         stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(makeSwitchRow(label: safeLandingLabel, text: "Safe Landing", control: safeLandingSwitch))
         stackView.addArrangedSubview(makeSwitchRow(label: darkModeLabel, text: "Dark Mode", control: darkModeSwitch))
@@ -330,24 +335,7 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         label.text = text
         label.font = UIFont.systemFont(ofSize: 17, weight: .medium)
 
-        let switchContainer = UIView()
-        switchContainer.translatesAutoresizingMaskIntoConstraints = false
-        switchContainer.layer.cornerRadius = 8
-        if !AppTheme.isDarkModeEnabled {
-            switchContainer.backgroundColor = UIColor.systemGray5
-        } else {
-            switchContainer.backgroundColor = .clear
-        }
-        switchContainer.addSubview(control)
-
-        control.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            control.centerYAnchor.constraint(equalTo: switchContainer.centerYAnchor),
-            control.centerXAnchor.constraint(equalTo: switchContainer.centerXAnchor),
-            switchContainer.heightAnchor.constraint(equalToConstant: 44)
-        ])
-
-        let row = UIStackView(arrangedSubviews: [label, switchContainer])
+        let row = UIStackView(arrangedSubviews: [label, control])
         row.axis = .horizontal
         row.alignment = .center
         row.spacing = 16
@@ -381,12 +369,22 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             }
         }
 
+        updateSwitchColors()
+
         landingDurationSlider.tintColor = AppTheme.accentColor
         landingDurationTextField.backgroundColor = AppTheme.backgroundColor
         landingDurationTextField.textColor = AppTheme.primaryTextColor
         landingDurationTextField.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
         closeButton.layer.borderColor = (AppTheme.isDarkModeEnabled ? AppTheme.accentColor : UIColor.darkGray).cgColor
         closeButton.setTitleColor(AppTheme.isDarkModeEnabled ? AppTheme.accentColor : UIColor.darkGray, for: .normal)
+    }
+
+    @objc private func updateSwitchColors() {
+        [safeLandingSwitch, darkModeSwitch, demoButtonSwitch, debugLogSwitch].forEach { switchControl in
+            switchControl.backgroundColor = switchControl.isOn ? .clear : UIColor.systemGreen.withAlphaComponent(0.8)
+            switchControl.layer.cornerRadius = 16
+            switchControl.clipsToBounds = true
+        }
     }
 
     private func updateUI() {
