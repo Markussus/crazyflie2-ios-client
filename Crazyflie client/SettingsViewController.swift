@@ -21,6 +21,8 @@ final class SettingsViewController: UIViewController {
     @IBOutlet weak var leftYLabel: UILabel!
     @IBOutlet weak var rightXLabel: UILabel!
     @IBOutlet weak var rightYLabel: UILabel!
+    @IBOutlet weak var darkModeLabel: UILabel!
+    @IBOutlet weak var darkModeSwitch: UISwitch!
     @IBOutlet weak var closeButton: UIButton!
     
     override func viewDidLoad() {
@@ -59,17 +61,18 @@ final class SettingsViewController: UIViewController {
     }
 
     private func applyTheme() {
-        view.backgroundColor = .systemBackground
-        closeButton.layer.borderColor = UIColor.systemBlue.cgColor
+        view.backgroundColor = AppTheme.backgroundColor
+        closeButton.layer.borderColor = AppTheme.accentColor.cgColor
+        darkModeSwitch.onTintColor = AppTheme.accentColor
 
         [pitchrollSensitivity, thrustSensitivity, yawSensitivity].forEach {
-            $0?.backgroundColor = .secondarySystemBackground
-            $0?.textColor = .label
-            $0?.keyboardAppearance = traitCollection.userInterfaceStyle == .dark ? .dark : .light
+            $0?.backgroundColor = AppTheme.secondaryBackgroundColor
+            $0?.textColor = AppTheme.primaryTextColor
+            $0?.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
         }
 
-        [leftXLabel, leftYLabel, rightXLabel, rightYLabel].forEach {
-            $0?.textColor = .label
+        [leftXLabel, leftYLabel, rightXLabel, rightYLabel, darkModeLabel].forEach {
+            $0?.textColor = AppTheme.primaryTextColor
         }
     }
     
@@ -85,6 +88,7 @@ final class SettingsViewController: UIViewController {
         leftYLabel.text = viewModel.leftYTitle
         rightXLabel.text = viewModel.rightXTitle
         rightYLabel.text = viewModel.rightYTitle
+        darkModeSwitch.isOn = AppTheme.isDarkModeEnabled
         
         if let pitch = viewModel.pitch {
             pitchrollSensitivity.text = String(describing: pitch)
@@ -106,6 +110,11 @@ final class SettingsViewController: UIViewController {
     
     @IBAction func controlModeChanged(_ sender: Any) {
         viewModel?.didSetControlMode(at: controlModeSelector.selectedSegmentIndex)
+    }
+
+    @IBAction func darkModeChanged(_ sender: Any) {
+        AppTheme.isDarkModeEnabled = darkModeSwitch.isOn
+        applyTheme()
     }
     
     @IBAction func closeClicked(_ sender: Any) {

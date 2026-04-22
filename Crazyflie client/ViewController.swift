@@ -103,20 +103,20 @@ final class ViewController: UIViewController {
     }
 
     private func applyTheme() {
-        let accentColor = UIColor.systemBlue
+        let accentColor = AppTheme.accentColor
 
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = AppTheme.backgroundColor
         leftView.backgroundColor = .clear
         rightView.backgroundColor = .clear
 
-        unlockLabel.textColor = .label
-        debugTextView.backgroundColor = .secondarySystemBackground
-        debugTextView.textColor = .label
-        debugTextView.keyboardAppearance = traitCollection.userInterfaceStyle == .dark ? .dark : .light
-        debugTextView.layer.borderColor = UIColor.separator.cgColor
+        unlockLabel.textColor = AppTheme.primaryTextColor
+        debugTextView.backgroundColor = AppTheme.secondaryBackgroundColor
+        debugTextView.textColor = AppTheme.primaryTextColor
+        debugTextView.keyboardAppearance = AppTheme.isDarkModeEnabled ? .dark : .default
+        debugTextView.layer.borderColor = AppTheme.separatorColor.cgColor
 
         connectProgress.progressTintColor = accentColor
-        connectProgress.trackTintColor = .tertiarySystemFill
+        connectProgress.trackTintColor = AppTheme.progressTrackColor
 
         connectButton.layer.borderColor = accentColor.cgColor
         armButton.layer.borderColor = accentColor.cgColor

@@ -127,14 +127,14 @@ final class BCJoystick: UIControl {
     }
 
     private func applyTheme() {
-        let accentColor = UIColor.systemBlue
+        let accentColor = AppTheme.accentColor
         shapeLayer.fillColor = accentColor.withAlphaComponent(0.25).cgColor
         vLabel.textColor = accentColor.withAlphaComponent(0.85)
         hLabel.textColor = accentColor.withAlphaComponent(0.85)
         vProgress.progressTintColor = accentColor
         hProgress.progressTintColor = accentColor
-        vProgress.trackTintColor = UIColor.tertiarySystemFill
-        hProgress.trackTintColor = UIColor.tertiarySystemFill
+        vProgress.trackTintColor = AppTheme.progressTrackColor
+        hProgress.trackTintColor = AppTheme.progressTrackColor
     }
     
     //MARK: - Touches Methods

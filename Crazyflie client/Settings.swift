@@ -7,6 +7,70 @@
 //
 
 import Foundation
+import UIKit
+
+enum AppTheme {
+    private static let darkModeKey = "darkModeEnabled"
+
+    static var isDarkModeEnabled: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: darkModeKey)
+        }
+        set {
+            let defaults = UserDefaults.standard
+            defaults.set(newValue, forKey: darkModeKey)
+            defaults.synchronize()
+        }
+    }
+
+    static var accentColor: UIColor {
+        return UIColor(red: 0.0, green: 122.0 / 255.0, blue: 1.0, alpha: 1.0)
+    }
+
+    static var backgroundColor: UIColor {
+        if isDarkModeEnabled {
+            return UIColor(red: 18.0 / 255.0, green: 20.0 / 255.0, blue: 24.0 / 255.0, alpha: 1.0)
+        }
+
+        return .white
+    }
+
+    static var secondaryBackgroundColor: UIColor {
+        if isDarkModeEnabled {
+            return UIColor(red: 36.0 / 255.0, green: 40.0 / 255.0, blue: 48.0 / 255.0, alpha: 1.0)
+        }
+
+        return UIColor(red: 248.0 / 255.0, green: 248.0 / 255.0, blue: 249.0 / 255.0, alpha: 1.0)
+    }
+
+    static var primaryTextColor: UIColor {
+        return isDarkModeEnabled ? .white : .black
+    }
+
+    static var secondaryTextColor: UIColor {
+        if isDarkModeEnabled {
+            return UIColor(white: 0.85, alpha: 1.0)
+        }
+
+        return UIColor(white: 0.2, alpha: 1.0)
+    }
+
+    static var separatorColor: UIColor {
+        if isDarkModeEnabled {
+            return UIColor(white: 0.35, alpha: 1.0)
+        }
+
+        return UIColor(white: 0.8, alpha: 1.0)
+    }
+
+    static var progressTrackColor: UIColor {
+        if isDarkModeEnabled {
+            return UIColor(white: 0.22, alpha: 1.0)
+        }
+
+        return UIColor(white: 0.87, alpha: 1.0)
+    }
+}
 
 enum Sensitivity: String {
     case slow = "slow"
