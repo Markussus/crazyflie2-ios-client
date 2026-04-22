@@ -325,10 +325,10 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
             stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
             stackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20),
-            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 420)
+            stackView.widthAnchor.constraint(lessThanOrEqualToConstant: 800)
         ])
 
-        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 340)
+        preferredStackWidthConstraint = stackView.widthAnchor.constraint(equalToConstant: 650)
         preferredStackWidthConstraint?.priority = UILayoutPriority(999)
         preferredStackWidthConstraint?.isActive = true
     }
@@ -349,7 +349,7 @@ private final class AdvancedSettingsViewController: UIViewController, UITextFiel
         let row = UIStackView(arrangedSubviews: views)
         row.axis = .horizontal
         row.alignment = .center
-        row.distribution = .center
+        row.distribution = .equalCentering
         row.spacing = 12
         return row
     }
