@@ -124,16 +124,7 @@ final class ViewModel {
     }
 
     var isArmButtonEnabled: Bool {
-        guard let crazyFlie = crazyFlie, showsArmButton else {
-            return false
-        }
-
-        switch crazyFlie.armingState {
-        case .arming, .disarming:
-            return false
-        default:
-            return true
-        }
+        return true
     }
 
     var statusText: String {
