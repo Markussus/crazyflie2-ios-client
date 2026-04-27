@@ -184,16 +184,7 @@ final class ViewModel {
     }
 
     var isConnectButtonEnabled: Bool {
-        guard let crazyFlie = crazyFlie else {
-            return false
-        }
-
-        switch crazyFlie.state {
-        case .idle:
-            return selectedCrazyflie?.isReadyToPair == true
-        case .connected, .scanning, .connecting, .services, .characteristics:
-            return true
-        }
+        return true
     }
 
     var statusText: String {
@@ -284,13 +275,6 @@ final class ViewModel {
     
     func connect() {
         guard let crazyFlie = crazyFlie else {
-            return
-        }
-
-        guard crazyFlie.state != .idle || selectedCrazyflie?.isReadyToPair == true else {
-            refreshNearbyCrazyflies()
-            delegate?.signalFailed(with: "No Crazyflie selected",
-                                   message: "Select a nearby Crazyflie that is ready to pair.")
             return
         }
 
