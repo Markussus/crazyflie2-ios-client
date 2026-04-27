@@ -152,8 +152,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             stopNearbyDiscovery(resetDevices: false)
 
             if let identifier = identifier,
-               let discoveredPeripheral = discoveredPeripherals[identifier],
-               discoveredPeripheral.isReadyToPair {
+               let discoveredPeripheral = discoveredPeripherals[identifier] {
                 NSLog("Connecting to discovered peripheral \(discoveredPeripheral.name)")
                 connectingPeripheral = discoveredPeripheral.peripheral
                 state = "connecting"
