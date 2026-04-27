@@ -168,7 +168,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
                 state = "connecting"
             } else {
                 NSLog("Start scanning")
-                central.scanForPeripherals(withServices: [CBUUID(string: crazyflieServiceUuid)], options: nil)
+                central.scanForPeripherals(withServices: nil, options: nil)
                 state = "scanning"
                 
                 scanTimer = Timer.scheduledTimer(timeInterval: 10, target: self, selector: #selector(scanningTimeout), userInfo: nil, repeats: false)
@@ -184,7 +184,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
 
         stopNearbyDiscovery(resetDevices: false)
         isDiscoveringNearbyDevices = true
-        central.scanForPeripherals(withServices: [CBUUID(string: crazyflieServiceUuid)],
+        central.scanForPeripherals(withServices: nil,
                                    options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
         discoveryTimer = Timer.scheduledTimer(timeInterval: 4, target: self, selector: #selector(discoveryTimeout), userInfo: nil, repeats: false)
         notifyDiscoveryUpdate()
