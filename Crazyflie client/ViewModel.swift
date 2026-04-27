@@ -87,10 +87,10 @@ final class ViewModel {
     var nearbyCrazyflieOptions: [NearbyCrazyflieOption] {
         return nearbyCrazyflies.map { crazyflie in
             let isSelected = selectedCrazyflieID.map { $0 == crazyflie.identifier } ?? false
-            NearbyCrazyflieOption(identifier: crazyflie.identifier,
-                                  title: nearbyCrazyflieTitle(for: crazyflie),
-                                  isReadyToPair: crazyflie.isReadyToPair,
-                                  isSelected: isSelected)
+            return NearbyCrazyflieOption(identifier: crazyflie.identifier,
+                                         title: nearbyCrazyflieTitle(for: crazyflie),
+                                         isReadyToPair: crazyflie.isReadyToPair,
+                                         isSelected: isSelected)
         }
     }
 
