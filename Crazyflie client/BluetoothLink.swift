@@ -90,7 +90,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     fileprivate var address = "Crazyflie"
     fileprivate var targetIdentifier: UUID?
     fileprivate var isDiscoveringNearbyDevices = false
-    fileprivate var discoveredPeripherals: [UUID: DiscoveredPeripheral] = [:]
+    private var discoveredPeripherals: [UUID: DiscoveredPeripheral] = [:]
     
     override init() {
         self.btQueue = DispatchQueue(label: "se.bitcraze.crazyfliecontrol.bluetooth", attributes: [])
