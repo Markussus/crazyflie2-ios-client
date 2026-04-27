@@ -30,6 +30,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         var name: String
         var rssi: Int
         var isReadyToPair: Bool
+        var lastSeenAt: Date
     }
     
     let crazyflieServiceUuid = "00000201-1C7F-4F9E-947B-43B7C00A9A08"
@@ -85,10 +86,12 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     fileprivate var scanTimer: Timer?
     fileprivate var discoveryTimer: Timer?
     fileprivate var connectionTimer: Timer?
+    fileprivate var staleDevicesTimer: Timer?
     
     fileprivate var connectCallback: ((Bool) -> ())?
     
     fileprivate var address = "Crazyflie"
+    fileprivate let staleVisibilityInterval: TimeInterval = 3.0
     fileprivate var targetIdentifier: UUID?
     fileprivate var isDiscoveringNearbyDevices = false
     private var discoveredPeripherals: [UUID: DiscoveredPeripheral] = [:]
@@ -223,7 +226,9 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             discoveredPeripherals[peripheral.identifier] = DiscoveredPeripheral(peripheral: peripheral,
                                                                                 name: peripheralName,
                                                                                 rssi: RSSI.intValue,
-                                                                                isReadyToPair: isConnectable)
+                                                                                isReadyToPair: isConnectable,
+                                                                                lastSeenAt: Date())
+            startStaleDevicesTimerIfNeeded()
             notifyDiscoveryUpdate()
         }
 
@@ -253,7 +258,9 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         discoveredPeripherals[peripheral.identifier] = DiscoveredPeripheral(peripheral: peripheral,
                                                                             name: peripheral.name ?? displayName(for: peripheral, advertisementData: [:]),
                                                                             rssi: discoveredPeripherals[peripheral.identifier]?.rssi ?? 0,
-                                                                            isReadyToPair: true)
+                                                                            isReadyToPair: true,
+                                                                            lastSeenAt: Date())
+        startStaleDevicesTimerIfNeeded()
         notifyDiscoveryUpdate()
         
         NSLog("Crazyflie connected, refreshing services ...")
@@ -497,6 +504,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
 
         if resetDevices {
             discoveredPeripherals.removeAll()
+            stopStaleDevicesTimer()
         }
 
         notifyDiscoveryUpdate()
@@ -536,6 +544,8 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     }
 
     private func notifyDiscoveryUpdate() {
+        pruneStaleDiscoveredPeripherals()
+
         let connectedIdentifier = crazyflie?.identifier
         let devices = discoveredPeripherals.values.map { discoveredPeripheral in
             DiscoveredCrazyflie(identifier: discoveredPeripheral.peripheral.identifier,
@@ -560,6 +570,40 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         }
 
         discoveryCallback?(devices, isDiscoveringNearbyDevices)
+    }
+
+    @objc
+    private func staleDevicesTick(timer: Timer) {
+        pruneStaleDiscoveredPeripherals()
+        notifyDiscoveryUpdate()
+    }
+
+    private func pruneStaleDiscoveredPeripherals() {
+        let cutoffDate = Date().addingTimeInterval(-staleVisibilityInterval)
+        discoveredPeripherals = discoveredPeripherals.filter { _, discoveredPeripheral in
+            discoveredPeripheral.lastSeenAt >= cutoffDate || discoveredPeripheral.peripheral.identifier == crazyflie?.identifier
+        }
+
+        if discoveredPeripherals.isEmpty {
+            stopStaleDevicesTimer()
+        }
+    }
+
+    private func startStaleDevicesTimerIfNeeded() {
+        guard staleDevicesTimer == nil else {
+            return
+        }
+
+        staleDevicesTimer = Timer.scheduledTimer(timeInterval: 1.0,
+                                                 target: self,
+                                                 selector: #selector(staleDevicesTick),
+                                                 userInfo: nil,
+                                                 repeats: true)
+    }
+
+    private func stopStaleDevicesTimer() {
+        staleDevicesTimer?.invalidate()
+        staleDevicesTimer = nil
     }
 
     private func displayName(for peripheral: CBPeripheral, advertisementData: [String: Any]) -> String {
