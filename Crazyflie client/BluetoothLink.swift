@@ -186,7 +186,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             return
         }
 
-        stopNearbyDiscovery(resetDevices: false)
+        stopNearbyDiscovery(resetDevices: true)
         isDiscoveringNearbyDevices = true
         central.scanForPeripherals(withServices: nil,
                                    options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
