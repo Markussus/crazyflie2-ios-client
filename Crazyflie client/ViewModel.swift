@@ -451,7 +451,8 @@ final class ViewModel {
 
     private func nearbyCrazyflieTitle(for crazyflie: BluetoothLink.DiscoveredCrazyflie) -> String {
         let pairingState = crazyflie.isConnected ? "connected" : (crazyflie.isReadyToPair ? "ready" : "not ready")
-        return "\(crazyflie.name) - \(crazyflie.rssi) dBm - \(pairingState)"
+        let shortIdentifier = String(crazyflie.identifier.uuidString.suffix(6))
+        return "\(crazyflie.name) [\(shortIdentifier)] - \(crazyflie.rssi) dBm - \(pairingState)"
     }
 }
 

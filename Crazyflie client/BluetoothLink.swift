@@ -590,8 +590,8 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         }
 
         return normalizedName.contains("crazyflie")
-            || normalizedName.contains("cf2")
-            || normalizedName.contains("cf21")
-            || normalizedName.contains("c21b")
+            || normalizedName.hasPrefix("cf2")
+            || normalizedName.hasPrefix("cf21")
+            || normalizedName.hasPrefix("c21b")
     }
 }
