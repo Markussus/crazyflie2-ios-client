@@ -63,10 +63,6 @@ final class ViewController: UIViewController {
     }
 
     @IBAction func nearbyCrazyflieClicked(_ sender: UIButton) {
-        if #available(iOS 14.0, *) {
-            return
-        }
-
         presentNearbyCrazyflies(from: sender)
     }
 
@@ -154,7 +150,7 @@ final class ViewController: UIViewController {
         safeLandingLabel.text = viewModel.safeLandingWarningText
         nearbyCrazyflieButton.setTitle(viewModel.nearbyCrazyflieButtonTitle, for: .normal)
         nearbyCrazyflieButton.isEnabled = true
-        armButton.isHidden = !viewModel.showsArmButton
+        armButton.isHidden = false
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)
         demoButton.isHidden = !viewModel.showsDemoButton
@@ -176,7 +172,6 @@ final class ViewController: UIViewController {
         connectProgress.setProgress(viewModel.progress, animated: true)
         connectButton.setTitle(viewModel.topButtonTitle, for: .normal)
         connectButton.isEnabled = viewModel.isConnectButtonEnabled
-        updateNearbyCrazyflieMenu()
     }
     
     // MARK: - Navigation
@@ -213,50 +208,6 @@ extension ViewController: ViewModelDelegate {
 }
 
 private extension ViewController {
-    func updateNearbyCrazyflieMenu() {
-        guard #available(iOS 14.0, *),
-              let viewModel = viewModel else {
-            return
-        }
-
-        nearbyCrazyflieButton.menu = makeNearbyCrazyflieMenu(viewModel: viewModel)
-        nearbyCrazyflieButton.showsMenuAsPrimaryAction = true
-    }
-
-    @available(iOS 14.0, *)
-    func makeNearbyCrazyflieMenu(viewModel: ViewModel) -> UIMenu {
-        var actions = viewModel.nearbyCrazyflieOptions.map { option in
-            UIAction(title: option.title,
-                     image: nil,
-                     identifier: nil,
-                     discoverabilityTitle: nil,
-                     attributes: [],
-                     state: option.isSelected ? .on : .off) { [weak self] _ in
-                self?.viewModel?.selectNearbyCrazyflie(with: option.identifier)
-            }
-        }
-
-        actions.insert(UIAction(title: "Scan Again",
-                                image: nil,
-                                identifier: nil,
-                                discoverabilityTitle: nil,
-                                attributes: [],
-                                state: .off) { [weak self] _ in
-            self?.viewModel?.refreshNearbyCrazyflies()
-        }, at: 0)
-
-        if actions.count == 1 {
-            actions.append(UIAction(title: "No Crazyflies found",
-                                    image: nil,
-                                    identifier: nil,
-                                    discoverabilityTitle: nil,
-                                    attributes: [.disabled],
-                                    state: .off) { _ in })
-        }
-
-        return UIMenu(title: "Nearby Crazyflies", children: actions)
-    }
-
     func presentNearbyCrazyflies(from sourceView: UIView) {
         guard let viewModel = viewModel else {
             return

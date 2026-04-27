@@ -123,11 +123,7 @@ final class ViewModel {
     }
 
     var showsArmButton: Bool {
-        guard let crazyFlie = crazyFlie else {
-            return false
-        }
-
-        return crazyFlie.state == .connected && crazyFlie.requiresArming
+        return true
     }
 
     var demoButtonTitle: String {
@@ -184,16 +180,7 @@ final class ViewModel {
     }
 
     var isArmButtonEnabled: Bool {
-        guard let crazyFlie = crazyFlie, showsArmButton else {
-            return false
-        }
-
-        switch crazyFlie.armingState {
-        case .arming, .disarming:
-            return false
-        default:
-            return true
-        }
+        return true
     }
 
     var isConnectButtonEnabled: Bool {
@@ -238,7 +225,7 @@ final class ViewModel {
             return "Detecting Crazyflie type..."
         }
 
-        if showsArmButton {
+        if crazyFlie.requiresArming {
             switch crazyFlie.armingState {
             case .arming:
                 return "Arming brushless system..."
@@ -269,12 +256,12 @@ final class ViewModel {
             return false
         }
 
-        if crazyFlie?.isDetectingDeviceType == true {
+        if crazyFlie.isDetectingDeviceType {
             return false
         }
 
-        if showsArmButton {
-            return bothThumbsOnJoystick && crazyFlie?.armingState == .armed
+        if crazyFlie.requiresArming {
+            return bothThumbsOnJoystick && crazyFlie.armingState == .armed
         }
 
         return bothThumbsOnJoystick
@@ -311,7 +298,23 @@ final class ViewModel {
     }
 
     func toggleArm() {
-        crazyFlie?.toggleArm()
+        guard let crazyFlie = crazyFlie else {
+            return
+        }
+
+        guard crazyFlie.state == .connected else {
+            delegate?.signalFailed(with: "Not connected",
+                                   message: "Connect a Crazyflie before using Arm.")
+            return
+        }
+
+        guard crazyFlie.requiresArming else {
+            delegate?.signalFailed(with: "Arm not required",
+                                   message: "The connected Crazyflie does not require arming.")
+            return
+        }
+
+        crazyFlie.toggleArm()
     }
 
     func toggleDemoMode() {
