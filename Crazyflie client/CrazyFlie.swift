@@ -189,8 +189,12 @@ open class CrazyFlie: NSObject {
     }
 
     func toggleArm() {
-        guard state == .connected, requiresArming else {
+        guard state == .connected else {
             return
+        }
+
+        if !requiresArming {
+            setFlightRequirement(true, deviceType: detectedDeviceType)
         }
 
         switch armingState {
@@ -198,6 +202,8 @@ open class CrazyFlie: NSObject {
             requestArming(true)
         case .armed:
             requestArming(false)
+        case .unavailable:
+            requestArming(true)
         default:
             break
         }
