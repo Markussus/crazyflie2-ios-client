@@ -278,7 +278,8 @@ final class ViewModel {
             return
         }
 
-        crazyFlie.connect(to: selectedCrazyflie, callback: nil)
+        let preferredCrazyflie = selectedCrazyflie?.isReadyToPair == true ? selectedCrazyflie : nil
+        crazyFlie.connect(to: preferredCrazyflie, callback: nil)
     }
 
     func toggleArm() {

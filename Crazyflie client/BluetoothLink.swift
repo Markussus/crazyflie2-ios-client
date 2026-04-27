@@ -84,6 +84,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     
     fileprivate var scanTimer: Timer?
     fileprivate var discoveryTimer: Timer?
+    fileprivate var connectionTimer: Timer?
     
     fileprivate var connectCallback: ((Bool) -> ())?
     
@@ -151,10 +152,12 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             stopNearbyDiscovery(resetDevices: false)
 
             if let identifier = identifier,
-               let discoveredPeripheral = discoveredPeripherals[identifier] {
+               let discoveredPeripheral = discoveredPeripherals[identifier],
+               discoveredPeripheral.isReadyToPair {
                 NSLog("Connecting to discovered peripheral \(discoveredPeripheral.name)")
                 connectingPeripheral = discoveredPeripheral.peripheral
                 state = "connecting"
+                startConnectionTimeout()
                 central.connect(discoveredPeripheral.peripheral, options: nil)
                 return
             }
@@ -166,6 +169,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
                 connectingPeripheral = peripheral
                 central.connect(connectingPeripheral!, options: nil)
                 state = "connecting"
+                startConnectionTimeout()
             } else {
                 NSLog("Start scanning")
                 central.scanForPeripherals(withServices: nil, options: nil)
@@ -197,6 +201,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         state = "idle"
         scanTimer?.invalidate()
         scanTimer = nil
+        stopConnectionTimeout()
         
         error = "Timeout"
         connectCallback?(false)
@@ -230,6 +235,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             NSLog("Stop scanning")
             connectingPeripheral = peripheral
             state = "connecting"
+            startConnectionTimeout()
 
             central.connect(peripheral, options: nil)
         }
@@ -238,6 +244,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         self.error = "Failed to connect"
         state = "idle"
+        stopConnectionTimeout()
         connectCallback?(false)
     }
     
@@ -297,6 +304,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             
             if self.crtpCharacteristic != nil && self.crtpUpCharacteristic != nil && crtpDownCharacteristic != nil {
                 state = "connected"
+                stopConnectionTimeout()
                 connectCallback?(true)
                 // Start the packet polling
                 self.btQueue.async {
@@ -353,6 +361,8 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     }
     
     func disconnect() {
+        stopConnectionTimeout()
+
         switch state {
         case "scanning":
             NSLog("Cancel scanning")
@@ -491,6 +501,39 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         }
 
         notifyDiscoveryUpdate()
+    }
+
+    @objc
+    private func connectionTimeout(timer: Timer) {
+        guard state == "connecting" || state == "services" || state == "characteristics" else {
+            return
+        }
+
+        error = "Timeout"
+
+        if let peripheral = connectingPeripheral {
+            centralManager?.cancelPeripheralConnection(peripheral)
+        } else {
+            disconnect()
+        }
+
+        stopConnectionTimeout()
+        state = "idle"
+        connectCallback?(false)
+    }
+
+    private func startConnectionTimeout() {
+        stopConnectionTimeout()
+        connectionTimer = Timer.scheduledTimer(timeInterval: 10,
+                                               target: self,
+                                               selector: #selector(connectionTimeout),
+                                               userInfo: nil,
+                                               repeats: false)
+    }
+
+    private func stopConnectionTimeout() {
+        connectionTimer?.invalidate()
+        connectionTimer = nil
     }
 
     private func notifyDiscoveryUpdate() {
