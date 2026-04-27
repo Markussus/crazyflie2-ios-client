@@ -140,7 +140,7 @@ final class ViewController: UIViewController {
         unlockLabel.text = viewModel.statusText
         safeLandingLabel.isHidden = !viewModel.isSafeLandingActive
         safeLandingLabel.text = viewModel.safeLandingWarningText
-        armButton.isHidden = !viewModel.showsArmButton
+        armButton.isHidden = false
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)
         demoButton.isHidden = !viewModel.showsDemoButton
