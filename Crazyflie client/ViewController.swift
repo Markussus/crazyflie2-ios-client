@@ -18,6 +18,7 @@ final class ViewController: UIViewController {
     @IBOutlet weak var unlockLabel: UILabel!
     @IBOutlet weak var safeLandingLabel: UILabel!
     @IBOutlet weak var armButton: UIButton!
+    @IBOutlet weak var nearbyCrazyflieButton: UIButton!
     @IBOutlet weak var demoButton: UIButton!
     @IBOutlet weak var debugTextView: UITextView!
     @IBOutlet weak var connectButton: UIButton!
@@ -61,6 +62,14 @@ final class ViewController: UIViewController {
         viewModel?.connect()
     }
 
+    @IBAction func nearbyCrazyflieClicked(_ sender: UIButton) {
+        if #available(iOS 14.0, *) {
+            return
+        }
+
+        presentNearbyCrazyflies(from: sender)
+    }
+
     @IBAction func armClicked(_ sender: Any) {
         viewModel?.toggleArm()
     }
@@ -83,6 +92,9 @@ final class ViewController: UIViewController {
         debugTextView.layer.cornerRadius = 4
         debugTextView.isEditable = false
         debugTextView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+        nearbyCrazyflieButton.titleLabel?.adjustsFontSizeToFitWidth = true
+        nearbyCrazyflieButton.titleLabel?.minimumScaleFactor = 0.75
+        nearbyCrazyflieButton.titleLabel?.lineBreakMode = .byTruncatingTail
         applyTheme()
         
         //Init joysticks
@@ -125,7 +137,7 @@ final class ViewController: UIViewController {
         connectProgress.progressTintColor = accentColor
         connectProgress.trackTintColor = AppTheme.progressTrackColor
 
-        [connectButton, armButton, demoButton, settingsButton].forEach {
+        [nearbyCrazyflieButton, connectButton, armButton, demoButton, settingsButton].forEach {
             $0?.layer.borderColor = accentColor.cgColor
             $0?.setTitleColor(accentColor, for: .normal)
             $0?.setTitleColor(accentColor.withAlphaComponent(0.45), for: .disabled)
@@ -140,6 +152,8 @@ final class ViewController: UIViewController {
         unlockLabel.text = viewModel.statusText
         safeLandingLabel.isHidden = !viewModel.isSafeLandingActive
         safeLandingLabel.text = viewModel.safeLandingWarningText
+        nearbyCrazyflieButton.setTitle(viewModel.nearbyCrazyflieButtonTitle, for: .normal)
+        nearbyCrazyflieButton.isEnabled = true
         armButton.isHidden = !viewModel.showsArmButton
         armButton.isEnabled = viewModel.isArmButtonEnabled
         armButton.setTitle(viewModel.armButtonTitle, for: .normal)
@@ -161,6 +175,8 @@ final class ViewController: UIViewController {
         
         connectProgress.setProgress(viewModel.progress, animated: true)
         connectButton.setTitle(viewModel.topButtonTitle, for: .normal)
+        connectButton.isEnabled = viewModel.isConnectButtonEnabled
+        updateNearbyCrazyflieMenu()
     }
     
     // MARK: - Navigation
@@ -192,6 +208,86 @@ extension ViewController: ViewModelDelegate {
                                       handler: {[weak alert] (action) in
             alert?.dismiss(animated: true, completion: nil)
         }))
+        present(alert, animated: true, completion: nil)
+    }
+}
+
+private extension ViewController {
+    func updateNearbyCrazyflieMenu() {
+        guard #available(iOS 14.0, *),
+              let viewModel = viewModel else {
+            return
+        }
+
+        nearbyCrazyflieButton.menu = makeNearbyCrazyflieMenu(viewModel: viewModel)
+        nearbyCrazyflieButton.showsMenuAsPrimaryAction = true
+    }
+
+    @available(iOS 14.0, *)
+    func makeNearbyCrazyflieMenu(viewModel: ViewModel) -> UIMenu {
+        var actions = viewModel.nearbyCrazyflieOptions.map { option in
+            UIAction(title: option.title,
+                     image: nil,
+                     identifier: nil,
+                     discoverabilityTitle: nil,
+                     attributes: [],
+                     state: option.isSelected ? .on : .off) { [weak self] _ in
+                self?.viewModel?.selectNearbyCrazyflie(with: option.identifier)
+            }
+        }
+
+        actions.insert(UIAction(title: "Scan Again",
+                                image: nil,
+                                identifier: nil,
+                                discoverabilityTitle: nil,
+                                attributes: [],
+                                state: .off) { [weak self] _ in
+            self?.viewModel?.refreshNearbyCrazyflies()
+        }, at: 0)
+
+        if actions.count == 1 {
+            actions.append(UIAction(title: "No Crazyflies found",
+                                    image: nil,
+                                    identifier: nil,
+                                    discoverabilityTitle: nil,
+                                    attributes: [.disabled],
+                                    state: .off) { _ in })
+        }
+
+        return UIMenu(title: "Nearby Crazyflies", children: actions)
+    }
+
+    func presentNearbyCrazyflies(from sourceView: UIView) {
+        guard let viewModel = viewModel else {
+            return
+        }
+
+        let alert = UIAlertController(title: "Nearby Crazyflies",
+                                      message: viewModel.nearbyCrazyflieButtonHint,
+                                      preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "Scan Again", style: .default) { [weak self] _ in
+            self?.viewModel?.refreshNearbyCrazyflies()
+        })
+
+        for option in viewModel.nearbyCrazyflieOptions {
+            let title = option.isSelected ? "[Selected] \(option.title)" : option.title
+            alert.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
+                self?.viewModel?.selectNearbyCrazyflie(with: option.identifier)
+            })
+        }
+
+        if viewModel.nearbyCrazyflieOptions.isEmpty {
+            alert.addAction(UIAlertAction(title: "No Crazyflies found", style: .default, handler: nil))
+        }
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = sourceView
+            popover.sourceRect = sourceView.bounds
+        }
+
         present(alert, animated: true, completion: nil)
     }
 }

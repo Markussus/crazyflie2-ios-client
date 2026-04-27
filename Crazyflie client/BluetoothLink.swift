@@ -17,6 +17,20 @@ import CoreBluetooth
     Bitcraze Wiki: https://www.bitcraze.io/documentation/repository/crazyflie2-nrf-firmware/master/protocols/ble
  */
 final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+    struct DiscoveredCrazyflie {
+        let identifier: UUID
+        let name: String
+        let rssi: Int
+        let isReadyToPair: Bool
+        let isConnected: Bool
+    }
+
+    private struct DiscoveredPeripheral {
+        let peripheral: CBPeripheral
+        var name: String
+        var rssi: Int
+        var isReadyToPair: Bool
+    }
     
     let crazyflieServiceUuid = "00000201-1C7F-4F9E-947B-43B7C00A9A08"
     let crtpCharacteristicUuid = "00000202-1C7F-4F9E-947B-43B7C00A9A08"
@@ -46,6 +60,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     var stateCallback: ((NSString) -> ())?
     var txCallback: ((Bool) -> ())?
     var rxCallback: ((Data) -> ())?
+    var discoveryCallback: (([DiscoveredCrazyflie], Bool) -> ())?
     private(set) var connectedName: String?
     
     fileprivate var centralManager: CBCentralManager?
@@ -68,10 +83,14 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     fileprivate var error = ""
     
     fileprivate var scanTimer: Timer?
+    fileprivate var discoveryTimer: Timer?
     
     fileprivate var connectCallback: ((Bool) -> ())?
     
     fileprivate var address = "Crazyflie"
+    fileprivate var targetIdentifier: UUID?
+    fileprivate var isDiscoveringNearbyDevices = false
+    fileprivate var discoveredPeripherals: [UUID: DiscoveredPeripheral] = [:]
     
     override init() {
         self.btQueue = DispatchQueue(label: "se.bitcraze.crazyfliecontrol.bluetooth", attributes: [])
@@ -95,9 +114,19 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             canBluetooth = central.state.rawValue == 5 // PoweredOn
         }
         print("Bluetooth is now " + (canBluetooth ? "on" : "off"))
+
+        if canBluetooth {
+            refreshAvailableDevices()
+        } else {
+            stopNearbyDiscovery(resetDevices: true)
+        }
     }
     
     func connect(_ address: String?, callback: @escaping (Bool) -> ()) {
+        connect(address: address, identifier: nil, callback: callback)
+    }
+
+    func connect(address: String?, identifier: UUID?, callback: @escaping (Bool) -> ()) {
         if !canBluetooth || state != "idle" {
             error = canBluetooth ? "Already connected":"Bluetooth disabled"
             callback(false)
@@ -109,6 +138,7 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         } else {
             self.address = address!
         }
+        self.targetIdentifier = identifier
         
         // Reseting characteristics
         self.crtpCharacteristic = nil
@@ -117,23 +147,47 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         
         
         if let central = centralManager {
+            connectCallback = callback
+            stopNearbyDiscovery(resetDevices: false)
+
+            if let identifier = identifier,
+               let discoveredPeripheral = discoveredPeripherals[identifier] {
+                NSLog("Connecting to discovered peripheral \(discoveredPeripheral.name)")
+                connectingPeripheral = discoveredPeripheral.peripheral
+                state = "connecting"
+                central.connect(discoveredPeripheral.peripheral, options: nil)
+                return
+            }
+
             let connectedPeripheral = central.retrieveConnectedPeripherals(withServices: [CBUUID(string: crazyflieServiceUuid)])
             
-            if connectedPeripheral.count > 0  && connectedPeripheral.first!.name != nil && connectedPeripheral.first!.name == self.address {
+            if let peripheral = connectedPeripheral.first(where: { matchesSelection(peripheral: $0, fallbackName: $0.name) }) {
                 NSLog("Already connected, reusing peripheral")
-                connectingPeripheral = connectedPeripheral.first
+                connectingPeripheral = peripheral
                 central.connect(connectingPeripheral!, options: nil)
                 state = "connecting"
             } else {
                 NSLog("Start scanning")
-                central.scanForPeripherals(withServices: nil, options: nil)
+                central.scanForPeripherals(withServices: [CBUUID(string: crazyflieServiceUuid)], options: nil)
                 state = "scanning"
                 
                 scanTimer = Timer.scheduledTimer(timeInterval: 10, target: self, selector: #selector(scanningTimeout), userInfo: nil, repeats: false)
             }
-            
-            connectCallback = callback
         }
+    }
+
+    func refreshAvailableDevices() {
+        guard canBluetooth, state == "idle", let central = centralManager else {
+            notifyDiscoveryUpdate()
+            return
+        }
+
+        stopNearbyDiscovery(resetDevices: false)
+        isDiscoveringNearbyDevices = true
+        central.scanForPeripherals(withServices: [CBUUID(string: crazyflieServiceUuid)],
+                                   options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+        discoveryTimer = Timer.scheduledTimer(timeInterval: 4, target: self, selector: #selector(discoveryTimeout), userInfo: nil, repeats: false)
+        notifyDiscoveryUpdate()
     }
     
     @objc
@@ -147,18 +201,37 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         error = "Timeout"
         connectCallback?(false)
     }
+
+    @objc
+    private func discoveryTimeout(timer: Timer) {
+        stopNearbyDiscovery(resetDevices: false)
+    }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        if let name = peripheral.name  {
-            if name.starts(with: self.address) {
-                scanTimer?.invalidate()
-                central.stopScan()
-                NSLog("Stop scanning")
-                connectingPeripheral = peripheral
-                state = "connecting"
-                
-                central.connect(peripheral, options: nil)
-            }
+        let peripheralName = displayName(for: peripheral, advertisementData: advertisementData)
+        let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue
+            ?? (advertisementData[CBAdvertisementDataIsConnectable] as? Bool)
+            ?? true
+        let matchesCrazyflie = matchesCrazyflieName(peripheralName)
+            || (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?.contains(CBUUID(string: crazyflieServiceUuid)) == true
+
+        if matchesCrazyflie {
+            discoveredPeripherals[peripheral.identifier] = DiscoveredPeripheral(peripheral: peripheral,
+                                                                                name: peripheralName,
+                                                                                rssi: RSSI.intValue,
+                                                                                isReadyToPair: isConnectable)
+            notifyDiscoveryUpdate()
+        }
+
+        if state == "scanning", matchesSelection(peripheral: peripheral, fallbackName: peripheralName) {
+            scanTimer?.invalidate()
+            scanTimer = nil
+            central.stopScan()
+            NSLog("Stop scanning")
+            connectingPeripheral = peripheral
+            state = "connecting"
+
+            central.connect(peripheral, options: nil)
         }
     }
     
@@ -171,6 +244,11 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         crazyflie = peripheral
         connectedName = peripheral.name
+        discoveredPeripherals[peripheral.identifier] = DiscoveredPeripheral(peripheral: peripheral,
+                                                                            name: peripheral.name ?? displayName(for: peripheral, advertisementData: [:]),
+                                                                            rssi: discoveredPeripherals[peripheral.identifier]?.rssi ?? 0,
+                                                                            isReadyToPair: true)
+        notifyDiscoveryUpdate()
         
         NSLog("Crazyflie connected, refreshing services ...")
         
@@ -292,10 +370,12 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
         crazyflie = nil
         crtpCharacteristic = nil
         connectedName = nil
+        targetIdentifier = nil
         
         state = "idle"
         error = "Disconnected"
         print("Connection IDLE")
+        notifyDiscoveryUpdate()
     }
     
     func getState() -> NSString {
@@ -312,6 +392,11 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
 
     func onPacketReceived(_ callback: @escaping (Data) -> ()) {
         rxCallback = callback
+    }
+
+    func onDiscoveredDevices(_ callback: @escaping ([DiscoveredCrazyflie], Bool) -> ()) {
+        discoveryCallback = callback
+        notifyDiscoveryUpdate()
     }
     
     
@@ -388,5 +473,82 @@ final class BluetoothLink : NSObject, CBCentralManagerDelegate, CBPeripheralDele
             crazyflie!.writeValue(self.encodedSecondPacket, for: crtpUpCharacteristic, type: CBCharacteristicWriteType.withResponse)
             self.encodedSecondPacket = nil
         }
+    }
+
+    private func stopNearbyDiscovery(resetDevices: Bool) {
+        discoveryTimer?.invalidate()
+        discoveryTimer = nil
+
+        let shouldStopScan = isDiscoveringNearbyDevices && state == "idle"
+        isDiscoveringNearbyDevices = false
+
+        if shouldStopScan {
+            centralManager?.stopScan()
+        }
+
+        if resetDevices {
+            discoveredPeripherals.removeAll()
+        }
+
+        notifyDiscoveryUpdate()
+    }
+
+    private func notifyDiscoveryUpdate() {
+        let connectedIdentifier = crazyflie?.identifier
+        let devices = discoveredPeripherals.values.map { discoveredPeripheral in
+            DiscoveredCrazyflie(identifier: discoveredPeripheral.peripheral.identifier,
+                                name: discoveredPeripheral.name,
+                                rssi: discoveredPeripheral.rssi,
+                                isReadyToPair: discoveredPeripheral.isReadyToPair,
+                                isConnected: connectedIdentifier.map { $0 == discoveredPeripheral.peripheral.identifier } ?? false)
+        }.sorted { lhs, rhs in
+            if lhs.isConnected != rhs.isConnected {
+                return lhs.isConnected
+            }
+
+            if lhs.isReadyToPair != rhs.isReadyToPair {
+                return lhs.isReadyToPair
+            }
+
+            if lhs.rssi != rhs.rssi {
+                return lhs.rssi > rhs.rssi
+            }
+
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+
+        discoveryCallback?(devices, isDiscoveringNearbyDevices)
+    }
+
+    private func displayName(for peripheral: CBPeripheral, advertisementData: [String: Any]) -> String {
+        if let name = peripheral.name, !name.isEmpty {
+            return name
+        }
+
+        if let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String,
+           !advertisedName.isEmpty {
+            return advertisedName
+        }
+
+        return "Crazyflie \(peripheral.identifier.uuidString.prefix(4))"
+    }
+
+    private func matchesSelection(peripheral: CBPeripheral, fallbackName: String?) -> Bool {
+        if let targetIdentifier = targetIdentifier {
+            return peripheral.identifier == targetIdentifier
+        }
+
+        return (fallbackName ?? peripheral.name ?? "").starts(with: self.address)
+    }
+
+    private func matchesCrazyflieName(_ name: String?) -> Bool {
+        guard let normalizedName = name?.lowercased(), normalizedName.isEmpty == false else {
+            return false
+        }
+
+        return normalizedName.contains("crazyflie")
+            || normalizedName.contains("cf2")
+            || normalizedName.contains("cf21")
+            || normalizedName.contains("c21b")
     }
 }

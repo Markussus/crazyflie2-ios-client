@@ -109,14 +109,22 @@ open class CrazyFlie: NSObject {
     }
 
     func connect(_ callback:((Bool) -> Void)?) {
+        connect(to: nil, callback: callback)
+    }
+
+    func connect(to device: BluetoothLink.DiscoveredCrazyflie?, callback:((Bool) -> Void)?) {
         guard state == .idle else {
             self.disconnect()
             return
         }
 
-        appendDebugLog("Connecting over BLE...")
+        if let device = device {
+            appendDebugLog("Connecting over BLE to \(device.name)...")
+        } else {
+            appendDebugLog("Connecting over BLE...")
+        }
 
-        self.bluetoothLink.connect(nil, callback: {[weak self] (connected) in
+        self.bluetoothLink.connect(address: device?.name, identifier: device?.identifier, callback: {[weak self] (connected) in
             callback?(connected)
             guard connected else {
                 if self?.timer != nil {
@@ -186,6 +194,10 @@ open class CrazyFlie: NSObject {
         resetFlightState()
         appendDebugLog("Disconnected.")
         delegate?.didUpdateFlightStatus()
+    }
+
+    func refreshNearbyDevices() {
+        bluetoothLink.refreshAvailableDevices()
     }
 
     func toggleArm() {

@@ -14,6 +14,13 @@ protocol ViewModelDelegate: AnyObject {
 }
 
 final class ViewModel {
+    struct NearbyCrazyflieOption {
+        let identifier: UUID
+        let title: String
+        let isReadyToPair: Bool
+        let isSelected: Bool
+    }
+
     weak var delegate: ViewModelDelegate?
     let leftJoystickProvider: BCJoystickViewModel
     let rightJoystickProvider: BCJoystickViewModel
@@ -21,8 +28,11 @@ final class ViewModel {
     private var motionLink: MotionLink?
     private var crazyFlie: CrazyFlie?
     private var safeLandingCommander: SafeLandingCrazyFlieCommander?
+    private var nearbyCrazyflies: [BluetoothLink.DiscoveredCrazyflie] = []
+    private var selectedCrazyflieID: UUID?
     private var sensitivity: Sensitivity = .slow
     private var controlMode: ControlMode = ControlMode.current ?? .mode1
+    private(set) var isScanningForNearbyCrazyflies = false
     
     fileprivate(set) var progress: Float = 0
     fileprivate(set) var topButtonTitle: String
@@ -37,7 +47,11 @@ final class ViewModel {
         rightJoystickProvider.add(observer: self)
         
         crazyFlie = CrazyFlie(delegate: self)
+        crazyFlie?.bluetoothLink.onDiscoveredDevices { [weak self] devices, isScanning in
+            self?.handleNearbyCrazyfliesUpdate(devices: devices, isScanning: isScanning)
+        }
         loadDefaults()
+        refreshNearbyCrazyflies()
     }
     
     deinit {
@@ -60,6 +74,52 @@ final class ViewModel {
     
     var bothThumbsOnJoystick: Bool {
         return leftJoystickProvider.activated && rightJoystickProvider.activated
+    }
+
+    var selectedCrazyflie: BluetoothLink.DiscoveredCrazyflie? {
+        guard let selectedCrazyflieID = selectedCrazyflieID else {
+            return nil
+        }
+
+        return nearbyCrazyflies.first(where: { $0.identifier == selectedCrazyflieID })
+    }
+
+    var nearbyCrazyflieOptions: [NearbyCrazyflieOption] {
+        return nearbyCrazyflies.map { crazyflie in
+            let isSelected = selectedCrazyflieID.map { $0 == crazyflie.identifier } ?? false
+            NearbyCrazyflieOption(identifier: crazyflie.identifier,
+                                  title: nearbyCrazyflieTitle(for: crazyflie),
+                                  isReadyToPair: crazyflie.isReadyToPair,
+                                  isSelected: isSelected)
+        }
+    }
+
+    var nearbyCrazyflieButtonTitle: String {
+        if let selectedCrazyflie = selectedCrazyflie {
+            return nearbyCrazyflieTitle(for: selectedCrazyflie)
+        }
+
+        if isScanningForNearbyCrazyflies {
+            return "Scanning nearby Crazyflies..."
+        }
+
+        if nearbyCrazyflies.isEmpty {
+            return "Select Crazyflie"
+        }
+
+        return "Choose nearby Crazyflie"
+    }
+
+    var nearbyCrazyflieButtonHint: String {
+        if isScanningForNearbyCrazyflies {
+            return "Scanning..."
+        }
+
+        if nearbyCrazyflies.isEmpty {
+            return "No Crazyflies found yet"
+        }
+
+        return "Tap to choose"
     }
 
     var showsArmButton: Bool {
@@ -136,13 +196,42 @@ final class ViewModel {
         }
     }
 
+    var isConnectButtonEnabled: Bool {
+        guard let crazyFlie = crazyFlie else {
+            return false
+        }
+
+        switch crazyFlie.state {
+        case .idle:
+            return selectedCrazyflie?.isReadyToPair == true
+        case .connected, .scanning, .connecting, .services, .characteristics:
+            return true
+        }
+    }
+
     var statusText: String {
         guard let crazyFlie = crazyFlie else {
-            return "Place both thumbs to enable control"
+            return "Select a nearby Crazyflie to connect"
         }
 
         if isSafeLandingActive {
             return "Place both thumbs to enable control"
+        }
+
+        if crazyFlie.state != .connected {
+            if isScanningForNearbyCrazyflies {
+                return "Scanning for nearby Crazyflies..."
+            }
+
+            if let selectedCrazyflie = selectedCrazyflie {
+                return selectedCrazyflie.isReadyToPair
+                    ? "\(selectedCrazyflie.name) is ready to pair"
+                    : "\(selectedCrazyflie.name) is nearby but not ready to pair"
+            }
+
+            return nearbyCrazyflies.isEmpty
+                ? "No nearby Crazyflies found. Open the list to scan again"
+                : "Select a nearby Crazyflie to connect"
         }
 
         if crazyFlie.state == .connected && crazyFlie.isDetectingDeviceType {
@@ -168,6 +257,14 @@ final class ViewModel {
     }
 
     var shouldHideStatusText: Bool {
+        guard let crazyFlie = crazyFlie else {
+            return false
+        }
+
+        if crazyFlie.state != .connected {
+            return false
+        }
+
         if isSafeLandingActive {
             return false
         }
@@ -199,7 +296,18 @@ final class ViewModel {
     }
     
     func connect() {
-        crazyFlie?.connect(nil)
+        guard let crazyFlie = crazyFlie else {
+            return
+        }
+
+        guard crazyFlie.state != .idle || selectedCrazyflie?.isReadyToPair == true else {
+            refreshNearbyCrazyflies()
+            delegate?.signalFailed(with: "No Crazyflie selected",
+                                   message: "Select a nearby Crazyflie that is ready to pair.")
+            return
+        }
+
+        crazyFlie.connect(to: selectedCrazyflie, callback: nil)
     }
 
     func toggleArm() {
@@ -222,6 +330,15 @@ final class ViewModel {
 
     func setDebugLogVisible(_ isVisible: Bool) {
         AdvancedOptionsSettings.showDebugLog = isVisible
+        delegate?.signalUpdate()
+    }
+
+    func refreshNearbyCrazyflies() {
+        crazyFlie?.refreshNearbyDevices()
+    }
+
+    func selectNearbyCrazyflie(with identifier: UUID) {
+        selectedCrazyflieID = identifier
         delegate?.signalUpdate()
     }
     
@@ -323,6 +440,31 @@ final class ViewModel {
             topButtonTitle = "Disconnect"
         }
     }
+
+    private func handleNearbyCrazyfliesUpdate(devices: [BluetoothLink.DiscoveredCrazyflie], isScanning: Bool) {
+        nearbyCrazyflies = devices
+        isScanningForNearbyCrazyflies = isScanning
+
+        if let selectedCrazyflieID = selectedCrazyflieID,
+           nearbyCrazyflies.contains(where: { $0.identifier == selectedCrazyflieID }) {
+            delegate?.signalUpdate()
+            return
+        }
+
+        if nearbyCrazyflies.isEmpty == false {
+            selectedCrazyflieID = nearbyCrazyflies.first(where: { $0.isReadyToPair })?.identifier
+                ?? nearbyCrazyflies.first?.identifier
+        } else {
+            selectedCrazyflieID = nil
+        }
+
+        delegate?.signalUpdate()
+    }
+
+    private func nearbyCrazyflieTitle(for crazyflie: BluetoothLink.DiscoveredCrazyflie) -> String {
+        let pairingState = crazyflie.isConnected ? "connected" : (crazyflie.isReadyToPair ? "ready" : "not ready")
+        return "\(crazyflie.name) - \(crazyflie.rssi) dBm - \(pairingState)"
+    }
 }
 
 extension ViewModel: BCJoystickViewModelObserver {
@@ -355,6 +497,9 @@ extension ViewModel: CrazyFlieDelegate {
             safeLandingCommander?.resetSession()
         }
         updateWith(state: state)
+        if state == .idle {
+            refreshNearbyCrazyflies()
+        }
         delegate?.signalUpdate()
     }
 
