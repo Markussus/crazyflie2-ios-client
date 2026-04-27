@@ -274,11 +274,7 @@ final class ViewModel {
     }
     
     func connect() {
-        guard let crazyFlie = crazyFlie else {
-            return
-        }
-
-        crazyFlie.connect(to: selectedCrazyflie, callback: nil)
+        crazyFlie?.connect(nil)
     }
 
     func toggleArm() {
